@@ -97,9 +97,12 @@ jobs:
           test -f unpacked/recomplauncher.json
           test -f "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/Resources/recomplauncher.json"
           RUST_LOG=info "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds" --test-pattern --headless 1 --mute
+          mkdir -p dmg-mount
           hdiutil attach ${{ matrix.dmg }} -readonly -nobrowse -mountpoint dmg-mount
+          trap 'hdiutil detach dmg-mount -quiet || true' EXIT
           test -f "dmg-mount/Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds"
           hdiutil detach dmg-mount -quiet
+          trap - EXIT
 
       - name: Upload platform ZIP or tarball
         uses: actions/upload-artifact@v7

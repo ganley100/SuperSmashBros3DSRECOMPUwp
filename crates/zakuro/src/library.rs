@@ -462,7 +462,7 @@ mod tests {
             data[record + 6..record + 8].copy_from_slice(&1u16.to_be_bytes());
             data
         };
-        std::fs::write(folder.join("encrypted-mario-kart.cia"), encrypted_cia(game)).unwrap();
+        std::fs::write(folder.join("encrypted-smash-3ds.cia"), encrypted_cia(game)).unwrap();
         std::fs::write(folder.join("encrypted-unrelated-game.cia"), encrypted_cia(0x0004_0000_0005_5E00)).unwrap();
 
         let (games, _) = scan(&folder, None);
@@ -488,7 +488,7 @@ mod tests {
             assert!(supports_game(program_id), "expected {program_id:016X} to be supported");
         }
         assert!(!supports_game(0x0004_0000_0005_5E00)); // Pokémon Y
-        assert!(!supports_game(0x0004_000E_0003_0800)); // update, not base game
+        assert!(!supports_game(0x0004_000E_000E_DF00)); // update, not base game
         let updates = supported.map(|game_id| game_id | 0x0000_000E_0000_0000);
         for title_id in updates {
             assert!(belongs_to_supported_game(title_id), "expected update {title_id:016X} to match Smash 3DS");
@@ -538,7 +538,7 @@ mod tests {
         assert_eq!(pixel(8, 0), [0, 255, 0, 255]);
     }
 
-    /// 3GX plugins requires the separate regional v1.2 update CIA. Its title ID
+    /// Super Smash Bros. 3DS updates use a separate regional update title ID
     /// uses the update namespace (0004000E) but retains the base game's
     /// regional suffix, so it must be paired with that game's dump.
     #[test]
@@ -566,7 +566,7 @@ mod tests {
 
         let (games, children) = scan(&folder, None);
         assert!(children.is_empty());
-        assert_eq!(games.len(), regions.len(), "one playable base game per 3GX plugins region");
+        assert_eq!(games.len(), regions.len(), "one base game per supported region");
 
         for (game_id, update_version) in regions {
             let game = games.iter().find(|entry| entry.program_id == game_id).expect("base game should be in the library");

@@ -726,7 +726,7 @@ impl App {
         let known = self.library.games.iter().find(|game| game.path == path && game.problem.is_none()).map(|game| game.program_id);
         let program_id = known.or_else(|| Some(zakuro_fs::Title::load(path).ok()?.program_id()));
         if program_id.is_some_and(|id| !library::supports_game(id)) {
-            return Err("This build only supports Super Smash Bros. for Nintendo 3DS (Japan, Europe, USA, Korea and Taiwan releases).".to_owned());
+            return Err("This build only supports the Japan, USA, and Europe/Australia releases of Super Smash Bros. for Nintendo 3DS.".to_owned());
         }
         self.active = self.settings.for_game(program_id);
         let started = self.start_game(path);
