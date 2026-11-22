@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mario Kart 7 Recompiled
+Comment=Mario Kart 7 Recompiled for desktop
+Exec=mario-kart-7 %f
+Icon=zakuro
+Terminal=false
+Categories=Game;Emulator;
