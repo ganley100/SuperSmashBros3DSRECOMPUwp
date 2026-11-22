@@ -384,6 +384,7 @@ fn user_command(system: &mut System, buffer: &CommandBuffer, header: Header) -> 
             let path_ptr = buffer.get(&mut system.memory, 9);
             let open = system.services.fs.archives.get(&archive).cloned();
 
+            let path = decode_path(system, path_type, path_size, path_ptr);
             let result = match open {
                 Some(OpenArchive { host: Some(host), .. }) => {
                     open_host_file(system, &host, path_type, path_size, path_ptr, flags)
@@ -394,6 +395,9 @@ fn user_command(system: &mut System, buffer: &CommandBuffer, header: Header) -> 
                 }
                 None => Err(errors::FS_ARCHIVE_NOT_MOUNTED),
             };
+            if let Err(code) = result {
+                log::error!("fs: OpenFile FAILED archive_handle=0x{archive:016X} path_type={path_type} path_size={path_size} path='{path}' flags=0x{flags:X} result={code:?} ({:#010X})", code.0);
+            }
             reply_with_file(system, buffer, command, result);
             true
         }
@@ -411,6 +415,12 @@ fn user_command(system: &mut System, buffer: &CommandBuffer, header: Header) -> 
             let file_path_ptr = buffer.get(&mut system.memory, 12);
 
             let archive_path = path_bytes(system, archive_path_size, archive_path_ptr);
+            let archive_path_text = if archive_id == ARCHIVE_NCCH {
+                format!("{:?}", NcchArchivePath::decode(system, archive_path_size, archive_path_ptr))
+            } else {
+                format!("{archive_path:02X?}")
+            };
+            let file_path = decode_path(system, file_path_type, file_path_size, file_path_ptr);
             let result = if host_archive_for(system, archive_id, &archive_path).is_some() {
                 open_host_archive(system, archive_id, &archive_path).and_then(|host| {
                     open_host_file(system, &host, file_path_type, file_path_size, file_path_ptr, flags)
@@ -424,6 +434,9 @@ fn user_command(system: &mut System, buffer: &CommandBuffer, header: Header) -> 
                 open_file(system, archive_id, ncch_path, file_path_type, file_path_size, file_path_ptr)
                     .ok_or(errors::FS_NOT_FOUND)
             };
+            if let Err(code) = result {
+                log::error!("fs: OpenFileDirectly FAILED archive_id=0x{archive_id:08X} archive_path={archive_path_text} archive_path_size={archive_path_size} file_path_type={file_path_type} file_path_size={file_path_size} file_path='{file_path}' flags=0x{flags:X} result={code:?} ({:#010X})", code.0);
+            }
             reply_with_file(system, buffer, command, result);
             true
         }
