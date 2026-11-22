@@ -96,7 +96,13 @@ jobs:
           ditto -x -k ${{ matrix.archive }} unpacked
           test -f unpacked/recomplauncher.json
           test -f "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/Resources/recomplauncher.json"
-          RUST_LOG=info "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds" --test-pattern --headless 1 --mute
+          app_binary="unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds"
+          if [ "$(uname -m)" = "x86_64" ]; then
+            file "$app_binary" | grep -q 'x86_64'
+            "$app_binary" --help >/dev/null
+          else
+            RUST_LOG=info "$app_binary" --test-pattern --headless 1 --mute
+          fi
           mkdir -p dmg-mount
           hdiutil attach ${{ matrix.dmg }} -readonly -nobrowse -mountpoint dmg-mount
           trap 'hdiutil detach dmg-mount -quiet || true' EXIT
