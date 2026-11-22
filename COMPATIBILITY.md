@@ -31,3 +31,7 @@ Accepted game file extensions are `.3ds`, `.cci`, `.cxi` and `.cia`. A legally o
 Generated native code is created locally and is not committed to this repository, CI artifacts or GitHub Releases. Do not treat a title ID being accepted by the library as proof that its content has been tested.
 
 When reporting a compatibility issue, include the game region, title ID, project version, operating system, whether an update or DLC was present, and the relevant runtime log.
+
+## 3GX plugins
+
+3GX plugin loading is disabled by default in both the runtime defaults and the RecompLauncher manifest. It can be enabled manually in Settings when desired.

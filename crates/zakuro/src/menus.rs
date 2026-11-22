@@ -765,7 +765,7 @@ impl Menus {
                 ui.checkbox(&mut settings.mods_enabled, "Enable game mods")
                     .on_hover_text("Apply code patches and RomFS replacements from the game's mods folder.");
                 ui.checkbox(&mut settings.plugins_3gx_enabled, "Enable 3GX plugins")
-                    .on_hover_text("Load Luma/Citra 3GX plugins for this game. Turn off to test Super Smash Bros. for Nintendo 3DS without plugins.");
+                    .on_hover_text("Disabled by default. Enable only when you want to load Luma/Citra 3GX plugins for this game.");
                 ui.add_enabled_ui(settings.hardware_rasterizer, |ui| {
                     resolution(ui, &mut settings.resolution);
                     texture_packs(ui, &mut settings.texture_packs);

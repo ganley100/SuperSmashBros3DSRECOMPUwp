@@ -611,7 +611,7 @@ impl Default for Settings {
             hardware_rasterizer: true,
             resolution: 2,
             mods_enabled: true,
-            plugins_3gx_enabled: true,
+            plugins_3gx_enabled: false,
             texture_packs: true,
             frame_interpolation: false,
             recompiled: true,
@@ -782,6 +782,15 @@ fn path() -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn three_gx_plugins_are_disabled_by_default() {
+        let settings = Settings::default();
+        assert!(!settings.plugins_3gx_enabled);
+
+        let loaded: Settings = toml::from_str("").unwrap();
+        assert!(!loaded.plugins_3gx_enabled, "missing setting keeps plugins disabled");
+    }
 
     #[test]
     fn settings_come_back_as_they_were_saved() {
