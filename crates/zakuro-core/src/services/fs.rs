@@ -1155,7 +1155,7 @@ fn ncch_kind_file(
     match kind {
         SELF_NCCH_ROMFS | SELF_NCCH_UPDATE_ROMFS => {
             let backing = romfs_backing(selected)?;
-            let path = if update || kind == SELF_NCCH_UPDATE_ROMFS { "patch:/" } else { "romfs:/" };
+            let path = if update { "patch:/" } else { "romfs:/" };
             Some(OpenFile { path: path.into(), backing })
         }
         SELF_NCCH_CODE => match code_source {
@@ -1187,7 +1187,11 @@ fn open_ncch_kind(
 ) -> Option<u32> {
     let data_dir = system.config.data_dir.clone().filter(|_| system.config.mods_enabled);
     let title = system.title.as_ref()?;
-    let update = use_update || kind == SELF_NCCH_UPDATE_ROMFS;
+    // An explicit update-title lookup must have an update, but the
+    // SelfNCCH update-RomFS selector (5) aliases the base RomFS when no
+    // update is installed. Do not turn that valid fallback into FS_NOT_FOUND.
+    let update = use_update
+        || (kind == SELF_NCCH_UPDATE_ROMFS && title.update().is_some());
     let selected = if update { &title.update()?.title } else { title };
     let file = ncch_kind_file(title, selected, kind, update, code_source, data_dir.as_deref())?;
     match kind {
