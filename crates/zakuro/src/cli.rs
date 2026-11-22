@@ -35,12 +35,12 @@ pub struct Options {
 }
 
 const USAGE: &str = "\
-mario-kart-7 - Mario Kart 7 for desktop
+smash-3ds - Super Smash Bros. for Nintendo 3DS for desktop
 
-usage: mario-kart-7 [rom.3ds|.cci|.cxi|.cia] [options]
-       mario-kart-7 --game <rom.3ds|.cci|.cxi|.cia> [options]
+usage: smash-3ds [rom.3ds|.cci|.cxi|.cia] [options]
+       smash-3ds --game <rom.3ds|.cci|.cxi|.cia> [options]
 
-This build only opens the Japan, Europe, USA, Korea, Taiwan and China releases of Mario Kart 7.
+This build only opens the Japan, USA, and Europe/Australia releases of Super Smash Bros. for Nintendo 3DS.
 Without a game it opens a library folder and lists matching game dumps only.
 The game dump must be decrypted. Recompile it locally from the library.
 
@@ -60,9 +60,9 @@ options:
   --prepare                        recompile the game given, without a window, printing
                                    progress lines, then exit (0 when it is ready)
   --data <dir>                     where game saves, logs and local tools live (default:
-                                   ~/.local/share/mario-kart-7,
-                                   ~/Library/Application Support/mario-kart-7
-                                   or %APPDATA%\\mario-kart-7)
+                                   ~/.local/share/super-smash-bros-3ds,
+                                   ~/Library/Application Support/super-smash-bros-3ds
+                                   or %APPDATA%\\super-smash-bros-3ds)
   -h, --help                       show this message
 ";
 

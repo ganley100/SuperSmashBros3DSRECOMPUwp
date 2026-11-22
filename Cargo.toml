@@ -10,11 +10,11 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.5"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.95"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/nvd123-YT/MK7Recomp"
+repository = "https://github.com/nvd123-YT/SuperSmashBros3DSRECOMP"
 
 [workspace.dependencies]
 zakuro-common = { path = "crates/zakuro-common" }

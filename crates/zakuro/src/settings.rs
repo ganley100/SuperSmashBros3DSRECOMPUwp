@@ -756,13 +756,13 @@ fn path() -> Option<PathBuf> {
         } else {
             var("XDG_CONFIG_HOME").or_else(|| var("HOME").map(|home| home.join(".config")))
         };
-        dir.map(|dir| dir.join("mario-kart-7").join("settings.toml"))
+        dir.map(|dir| dir.join("super-smash-bros-3ds").join("settings.toml"))
     };
 
     // RecompLauncher edits this same TOML before starting the game. Keep the
     // usual per-platform path for everyone else, and migrate an existing
     // settings file the first time a launcher-selected path is used.
-    if let Some(path) = var("MARIO_KART_7_SETTINGS_PATH") {
+    if let Some(path) = var("SUPER_SMASH_BROS_3DS_SETTINGS_PATH") {
         if !path.exists() {
             if let Some(legacy) = default().filter(|legacy| legacy != &path && legacy.is_file()) {
                 if let Some(parent) = path.parent() {

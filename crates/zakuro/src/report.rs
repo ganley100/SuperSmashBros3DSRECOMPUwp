@@ -146,7 +146,7 @@ pub fn text(name: &str, system: &System) -> String {
     field("OS", &os());
     field("CPU", &cpu());
     field("GPU", &gpu);
-    field("Mario Kart 7 Recomp version", concat!("v", env!("CARGO_PKG_VERSION")));
+    field("Super Smash Bros. for Nintendo 3DS Recomp version", concat!("v", env!("CARGO_PKG_VERSION")));
     field("Recompiled", if system.recompiled.is_some() { "yes" } else { "no" });
     field("Status", "");
     field("What happens", "");

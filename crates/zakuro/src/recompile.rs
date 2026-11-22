@@ -194,7 +194,7 @@ pub fn prepare(rom: &Path, data_dir: Option<&Path>) -> Result<(), String> {
         .map_err(|error| format!("could not open {}, {error}", rom.display()))?
         .program_id();
     if !crate::library::supports_game(program_id) {
-        return Err(format!("{} is not a Mario Kart 7 game dump", rom.display()));
+        return Err(format!("{} is not a Super Smash Bros. for Nintendo 3DS game dump", rom.display()));
     }
     let update = crate::library::addons_beside(rom).and_then(|(update, _, _)| update).map(|update| update.path);
     let tools = crate::zig::tools_dir(data_dir);

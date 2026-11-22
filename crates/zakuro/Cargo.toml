@@ -3,13 +3,13 @@ name = "zakuro"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Mario Kart 7 desktop runtime and launcher"
+description = "Super Smash Bros. for Nintendo 3DS desktop runtime and launcher"
 
 [lib]
 path = "src/lib.rs"
 
 [[bin]]
-name = "mario-kart-7"
+name = "smash-3ds"
 path = "src/main.rs"
 
 [dependencies]

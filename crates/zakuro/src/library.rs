@@ -8,17 +8,14 @@ use crate::recompile::Wanted;
 /// file endings of games Zakuro opens.
 const GAME_FILES: [&str; 4] = ["3ds", "cci", "cxi", "cia"];
 
-/// Retail base-game IDs for Mario Kart 7 (Japan, Europe, USA, Korea, Taiwan and China).
-const SUPPORTED_GAME_IDS: [u64; 6] = [
-    0x0004_0000_0003_0600,
-    0x0004_0000_0003_0700,
-    0x0004_0000_0003_0800,
-    0x0004_0000_0003_0A00,
-    0x0004_0000_0008_B400,
-    0x0004_0000_0008_B500,
+/// Retail base-game IDs for Super Smash Bros. for Nintendo 3DS (Japan, USA, Europe/Australia).
+const SUPPORTED_GAME_IDS: [u64; 3] = [
+    0x0004_0000_000B_8B00,
+    0x0004_0000_000E_DF00,
+    0x0004_0000_000E_E000,
 ];
 
-/// Whether a file is one of the supported Mario Kart 7 base games.
+/// Whether a file is one of the supported Super Smash Bros. for Nintendo 3DS base games.
 pub fn supports_game(program_id: u64) -> bool {
     SUPPORTED_GAME_IDS.contains(&program_id)
 }
@@ -262,7 +259,7 @@ fn addon(path: &Path) -> Option<Result<Addon, String>> {
         return None;
     }
     if cia.contents.iter().any(|content| content.offset.is_some() && content.encrypted()) {
-        return Some(Err("Encrypted, this build needs a decrypted Mario Kart 7 dump".to_owned()));
+        return Some(Err("Encrypted, this build needs a decrypted Super Smash Bros. for Nintendo 3DS dump".to_owned()));
     }
     Some(Ok(Addon { path: path.to_owned(), title_id: cia.title_id, version: cia.version }))
 }
@@ -272,7 +269,7 @@ fn addon(path: &Path) -> Option<Result<Addon, String>> {
 fn read_or_list_unreadable(path: &Path, data_dir: Option<&Path>) -> Game {
     std::panic::catch_unwind(|| read_game(path, data_dir)).unwrap_or_else(|_| {
         log::error!("reading {} failed", path.display());
-        unplayable(path, "Mario Kart 7 couldn't read this file, please report it".to_owned())
+        unplayable(path, "Super Smash Bros. for Nintendo 3DS couldn't read this file, please report it".to_owned())
     })
 }
 
@@ -302,7 +299,7 @@ fn unplayable_with_id(path: &Path, problem: String, program_id: u64) -> Game {
 }
 
 /// the title id survives CIA content encryption, because it is in the
-/// readable TMD. Keep it for rejected Mario Kart 7 dumps so the library can
+/// readable TMD. Keep it for rejected Super Smash Bros. for Nintendo 3DS dumps so the library can
 /// show the reason instead of silently dropping the file.
 fn cia_program_id(path: &Path) -> Option<u64> {
     if !path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("cia")) {
@@ -350,14 +347,14 @@ fn read_game(path: &Path, data_dir: Option<&Path>) -> Game {
 fn problem(error: &zakuro_fs::FsError) -> String {
     use zakuro_fs::FsError;
     match error {
-        FsError::Encrypted(_) | FsError::EncryptedCia => "Encrypted, this build needs a decrypted Mario Kart 7 dump".to_owned(),
+        FsError::Encrypted(_) | FsError::EncryptedCia => "Encrypted, this build needs a decrypted Super Smash Bros. for Nintendo 3DS dump".to_owned(),
         FsError::UnreadableRomFs(_) => "Partly encrypted or damaged, it needs dumping again".to_owned(),
         FsError::NotAGame(what) => {
             let mut what = what.to_string();
             if let Some(first) = what.get_mut(..1) {
                 first.make_ascii_uppercase();
             }
-            format!("{what} cannot be opened by the Mario Kart 7 build")
+            format!("{what} cannot be opened by the Super Smash Bros. for Nintendo 3DS build")
         }
         _ => format!("Can't be read, {error}"),
     }
@@ -441,22 +438,22 @@ mod tests {
 
     #[test]
     fn files_that_cant_be_played_say_why() {
-        assert_eq!(problem(&zakuro_fs::FsError::EncryptedCia), "Encrypted, this build needs a decrypted Mario Kart 7 dump");
+        assert_eq!(problem(&zakuro_fs::FsError::EncryptedCia), "Encrypted, this build needs a decrypted Super Smash Bros. for Nintendo 3DS dump");
         assert_eq!(
             problem(&zakuro_fs::FsError::NotAGame("an update")),
-            "An update cannot be opened by the Mario Kart 7 build"
+            "An update cannot be opened by the Super Smash Bros. for Nintendo 3DS build"
         );
     }
 
     #[test]
-    fn encrypted_mario_kart_7_cia_is_listed_with_a_warning() {
+    fn encrypted_super_smash_bros_3ds_cia_is_listed_with_a_warning() {
         use zakuro_fs::testing::{cia, ncch};
 
         let folder = std::env::temp_dir().join(format!("zakuro-encrypted-cia-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         std::fs::create_dir_all(&folder).unwrap();
 
-        let game = 0x0004_0000_0003_0800u64;
+        let game = 0x0004_0000_000E_DF00u64;
         let encrypted_cia = |title_id| {
             let mut data = cia(title_id, 0, &[(0, Some(&ncch(title_id, Some(&[1; 8]), &[])))]);
             // The executable content record follows the TMD signature and
@@ -474,35 +471,36 @@ mod tests {
         assert_eq!(rejected.program_id, game);
         assert_eq!(
             rejected.problem.as_deref(),
-            Some("Encrypted, this build needs a decrypted Mario Kart 7 dump")
+            Some("Encrypted, this build needs a decrypted Super Smash Bros. for Nintendo 3DS dump")
         );
 
         std::fs::remove_dir_all(folder).unwrap();
     }
 
     #[test]
-    fn only_mario_kart_7_retail_ids_are_supported() {
+    fn only_super_smash_bros_3ds_retail_ids_are_supported() {
         let supported = [
-            0x0004_0000_0003_0600, // Japan
-            0x0004_0000_0003_0700, // Europe
-            0x0004_0000_0003_0800, // USA
-            0x0004_0000_0003_0A00, // Korea
-            0x0004_0000_0008_B400, // Taiwan
-            0x0004_0000_0008_B500, // China
+            0x0004_0000_000B_8B00, // Japan
+            0x0004_0000_000E_DF00, // USA
+            0x0004_0000_000E_E000, // Europe / Australia
         ];
         for program_id in supported {
             assert!(supports_game(program_id), "expected {program_id:016X} to be supported");
         }
         assert!(!supports_game(0x0004_0000_0005_5E00)); // Pokémon Y
         assert!(!supports_game(0x0004_000E_0003_0800)); // update, not base game
-        let ctgp7_updates = [
-            0x0004_000E_0003_0600, // Japan v1.2 update
-            0x0004_000E_0003_0700, // Europe v1.2 update
-            0x0004_000E_0003_0800, // USA v1.2 update
-            0x0004_000E_0003_0A00, // Korea v1.2 update
+        let updates = supported.map(|game_id| game_id | 0x0000_000E_0000_0000);
+        for title_id in updates {
+            assert!(belongs_to_supported_game(title_id), "expected update {title_id:016X} to match Smash 3DS");
+        }
+        let dlc = [
+            0x0004_008C_000B_8B00, // Japan
+            0x0004_008C_000E_DF00, // USA
+            0x0004_008C_000E_E000, // Europe / Australia
         ];
-        for title_id in ctgp7_updates {
-            assert!(belongs_to_supported_game(title_id), "expected update {title_id:016X} to match Mario Kart 7");
+        for title_id in dlc {
+            assert!(belongs_to_supported_game(title_id), "expected DLC {title_id:016X} to match Smash 3DS");
+            assert_eq!(zakuro_fs::TitleKind::of(title_id), zakuro_fs::TitleKind::Dlc);
         }
         assert!(!belongs_to_supported_game(0x0004_000E_0005_5E00));
     }
@@ -540,22 +538,21 @@ mod tests {
         assert_eq!(pixel(8, 0), [0, 255, 0, 255]);
     }
 
-    /// CTGP-7 requires the separate regional v1.2 update CIA. Its title ID
+    /// 3GX plugins requires the separate regional v1.2 update CIA. Its title ID
     /// uses the update namespace (0004000E) but retains the base game's
     /// regional suffix, so it must be paired with that game's dump.
     #[test]
-    fn ctgp7_v12_updates_attach_to_each_supported_region() {
+    fn smash_region_updates_attach_to_each_supported_region() {
         use zakuro_fs::testing::{cia, ncch};
 
-        let folder = std::env::temp_dir().join(format!("zakuro-ctgp7-updates-{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("zakuro-smash-updates-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         std::fs::create_dir_all(&folder).unwrap();
 
         let regions = [
-            (0x0004_0000_0003_0600u64, 3152u16), // Japan
-            (0x0004_0000_0003_0700u64, 3152u16), // Europe
-            (0x0004_0000_0003_0800u64, 3152u16), // USA
-            (0x0004_0000_0003_0A00u64, 3088u16), // Korea
+            (0x0004_0000_000B_8B00u64, 1u16), // Japan
+            (0x0004_0000_000E_DF00u64, 2u16), // USA
+            (0x0004_0000_000E_E000u64, 3u16), // Europe / Australia
         ];
 
         for (index, (game_id, update_version)) in regions.into_iter().enumerate() {
@@ -569,7 +566,7 @@ mod tests {
 
         let (games, children) = scan(&folder, None);
         assert!(children.is_empty());
-        assert_eq!(games.len(), regions.len(), "one playable base game per CTGP-7 region");
+        assert_eq!(games.len(), regions.len(), "one playable base game per 3GX plugins region");
 
         for (game_id, update_version) in regions {
             let game = games.iter().find(|entry| entry.program_id == game_id).expect("base game should be in the library");
@@ -589,7 +586,7 @@ mod tests {
         let folder = std::env::temp_dir().join(format!("zakuro-library-addons-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         std::fs::create_dir_all(&folder).unwrap();
-        let game = 0x0004_0000_0003_0800u64;
+        let game = 0x0004_0000_000E_DF00u64;
         let update = |version: u16| cia(game | 0x000E_0000_0000, version, &[(0, Some(&ncch(game | 0x000E_0000_0000, Some(&[2; 8]), &[])))]);
         std::fs::write(folder.join("game.cxi"), ncch(game, Some(&[1; 8]), &[])).unwrap();
         std::fs::write(folder.join("old.cia"), update(0x0400)).unwrap();
@@ -599,7 +596,7 @@ mod tests {
         let orphan = 0x0004_000E_0000_0001u64;
         std::fs::write(folder.join("orphan.cia"), cia(orphan, 1, &[(0, Some(&ncch(orphan, Some(&[3; 8]), &[])))])).unwrap();
         // Download Play children, the game's and one of a game not there
-        let child = 0x0004_0001_0003_0800u64;
+        let child = 0x0004_0001_000E_DF00u64;
         std::fs::write(folder.join("child.cia"), cia(child, 0, &[(0, Some(&ncch(child, Some(&[4; 8]), &[])))])).unwrap();
         let stray = 0x0004_0001_0000_0002u64;
         std::fs::write(folder.join("stray.cia"), cia(stray, 0, &[(0, Some(&ncch(stray, Some(&[5; 8]), &[])))])).unwrap();

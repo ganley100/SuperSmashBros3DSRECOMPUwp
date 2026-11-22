@@ -75,7 +75,7 @@ pub fn run_with(linked: Option<Linked>, overlay: Option<Box<dyn GameOverlay>>) {
     let options = match cli::parse() {
         Ok(options) => options,
         Err(message) => {
-            eprintln!("Mario Kart 7: {message}");
+            eprintln!("Super Smash Bros. for Nintendo 3DS: {message}");
             std::process::exit(2);
         }
     };
@@ -89,7 +89,7 @@ pub fn run_with(linked: Option<Linked>, overlay: Option<Box<dyn GameOverlay>>) {
         match recompile::prepare(rom, data_dir.as_deref()) {
             Ok(()) => std::process::exit(0),
             Err(error) => {
-                eprintln!("Mario Kart 7: {error}");
+                eprintln!("Super Smash Bros. for Nintendo 3DS: {error}");
                 std::process::exit(1);
             }
         }
@@ -185,7 +185,7 @@ pub fn run_with(linked: Option<Linked>, overlay: Option<Box<dyn GameOverlay>>) {
     let event_loop = EventLoop::new().expect("create an event loop");
     event_loop.set_control_flow(ControlFlow::Poll);
     if let Err(error) = event_loop.run_app(&mut app) {
-        eprintln!("Mario Kart 7: {error}");
+        eprintln!("Super Smash Bros. for Nintendo 3DS: {error}");
     }
 }
 
@@ -225,7 +225,7 @@ fn default_data_dir() -> Option<PathBuf> {
     } else {
         var("XDG_DATA_HOME").or_else(|| var("HOME").map(|home| home.join(".local/share")))
     };
-    dir.map(|dir| dir.join("mario-kart-7"))
+    dir.map(|dir| dir.join("super-smash-bros-3ds"))
 }
 
 /// how long ago a state was saved, as a person would say it.
@@ -554,7 +554,7 @@ impl ApplicationHandler for App {
         }
 
         let size = self.window_size();
-        let attributes = Window::default_attributes().with_title("Mario Kart 7").with_inner_size(size);
+        let attributes = Window::default_attributes().with_title("Super Smash Bros. for Nintendo 3DS").with_inner_size(size);
         let renderer = self.options.renderer.unwrap_or(match self.settings.renderer {
             Renderer::Vulkan => RendererKind::Vulkan,
             Renderer::OpenGl => RendererKind::OpenGl,
@@ -588,7 +588,7 @@ impl ApplicationHandler for App {
                 self.start();
             }
             Err(error) => {
-                eprintln!("Mario Kart 7: could not start the {renderer:?} backend: {error}");
+                eprintln!("Super Smash Bros. for Nintendo 3DS: could not start the {renderer:?} backend: {error}");
                 event_loop.exit();
             }
         }
@@ -698,7 +698,7 @@ impl App {
             self.paused = true;
         } else if let Some(rom) = self.options.rom.clone() {
             if let Err(error) = self.play(Path::new(&rom)) {
-                eprintln!("Mario Kart 7 Recomp: {error}");
+                eprintln!("Super Smash Bros. for Nintendo 3DS Recomp: {error}");
                 std::process::exit(1);
             }
         }
@@ -726,7 +726,7 @@ impl App {
         let known = self.library.games.iter().find(|game| game.path == path && game.problem.is_none()).map(|game| game.program_id);
         let program_id = known.or_else(|| Some(zakuro_fs::Title::load(path).ok()?.program_id()));
         if program_id.is_some_and(|id| !library::supports_game(id)) {
-            return Err("This build only supports Mario Kart 7 (Japan, Europe, USA, Korea and Taiwan releases).".to_owned());
+            return Err("This build only supports Super Smash Bros. for Nintendo 3DS (Japan, Europe, USA, Korea and Taiwan releases).".to_owned());
         }
         self.active = self.settings.for_game(program_id);
         let started = self.start_game(path);
@@ -800,7 +800,7 @@ impl App {
             in_software.then(|| GPU_FALLBACK.to_owned()),
             outdated.then(|| {
                 format!(
-                    "{} was recompiled by an older version of Mario Kart 7 Recomp. Recompile it again from the library to get the newest improvements.",
+                    "{} was recompiled by an older version of Super Smash Bros. for Nintendo 3DS Recomp. Recompile it again from the library to get the newest improvements.",
                     game.name
                 )
             }),
@@ -1137,7 +1137,7 @@ impl App {
             Some(tools) if self.download_compiler && zig::download_size().is_some() && zig::can_download() => return Some(Toolchain::Download(tools)),
             Some(_) if zig::download_size().is_some() && zig::can_download() => self.menus.compiler_offer = Some(games.to_vec()),
             Some(_) if zig::download_size().is_some() => {
-                self.menus.message = Some(format!("Recompiling needs a C compiler, gcc or clang, or curl or wget for Mario Kart 7 Recomp to download one: {error}."));
+                self.menus.message = Some(format!("Recompiling needs a C compiler, gcc or clang, or curl or wget for Super Smash Bros. for Nintendo 3DS Recomp to download one: {error}."));
             }
             _ => self.menus.message = Some(format!("Recompiling needs a C compiler: {error}.")),
         }
@@ -1270,7 +1270,7 @@ impl App {
                         let folder = game_save_data_dir(data_dir, program_id);
                         match std::fs::create_dir_all(&folder) {
                             Ok(()) => show_folder(&folder),
-                            Err(error) => self.menus.message = Some(format!("Mario Kart 7's save-data folder can't be opened: {error}")),
+                            Err(error) => self.menus.message = Some(format!("Super Smash Bros. for Nintendo 3DS's save-data folder can't be opened: {error}")),
                         }
                     }
                     None => self.menus.message = Some("The application data folder isn't available on this system.".to_owned()),
@@ -1282,7 +1282,7 @@ impl App {
                         let folder = game_state_dir(data_dir, program_id);
                         match std::fs::create_dir_all(&folder) {
                             Ok(()) => show_folder(&folder),
-                            Err(error) => self.menus.message = Some(format!("Mario Kart 7's save-state folder can't be opened: {error}")),
+                            Err(error) => self.menus.message = Some(format!("Super Smash Bros. for Nintendo 3DS's save-state folder can't be opened: {error}")),
                         }
                     }
                     None => self.menus.message = Some("The application data folder isn't available on this system.".to_owned()),
@@ -1499,8 +1499,8 @@ impl App {
             }
             if let Some(window) = &self.window {
                 let title = match &self.game {
-                    Some(game) => format!("Mario Kart 7 Recomp - {} - {}", game.name, game.system.status_line()),
-                    None => "Mario Kart 7 Recomp".to_owned(),
+                    Some(game) => format!("Super Smash Bros. for Nintendo 3DS Recomp - {} - {}", game.name, game.system.status_line()),
+                    None => "Super Smash Bros. for Nintendo 3DS Recomp".to_owned(),
                 };
                 window.set_title(&title);
             }
@@ -1920,16 +1920,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn save_folders_are_scoped_to_the_mario_kart_7_title_id() {
-        let root = Path::new("/appdata/mario-kart-7");
-        let title_id = 0x0004_0000_0003_0800;
+    fn save_folders_are_scoped_to_the_super_smash_bros_3ds_title_id() {
+        let root = Path::new("/appdata/super-smash-bros-3ds");
+        let title_id = 0x0004_0000_000E_DF00;
         assert_eq!(
             game_save_data_dir(root, title_id),
-            root.join("user/savedata/0004000000030800")
+            root.join("user/savedata/00040000000EDF00")
         );
         assert_eq!(
             game_state_dir(root, title_id),
-            root.join("states/0004000000030800")
+            root.join("states/00040000000EDF00")
         );
     }
 
