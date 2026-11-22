@@ -4,7 +4,7 @@ An unofficial, game-specific desktop build for **Super Smash Bros. for Nintendo 
 
 This project is based on [Zakuro](https://github.com/fearkov/zakuro), a high-level-emulation Nintendo 3DS runtime, and [3dsrecomp](https://github.com/fearkov/3dsrecomp), its ahead-of-time ARM code recompiler. This fork is configured to accept the three regional releases of Super Smash Bros. for Nintendo 3DS and their matching updates and downloadable content.
 
-**Project version: 1.0.0**
+**Project version: 1.0.1**
 
 > **Compatibility:** Upstream Zakuro's compatibility list reports the USA release as playable with AOT-recompiled code. This standalone fork has not yet been independently validated end-to-end on every platform, region, update or DLC item. See [COMPATIBILITY.md](COMPATIBILITY.md).
 
@@ -23,6 +23,11 @@ Accepted base-game file formats are `.3ds`, `.cci`, `.cxi` and `.cia`. A legally
 Place a matching decrypted update CIA and any matching DLC CIA beside the base-game dump in the same game-library folder. The library pairs add-ons with the base game by their regional title-ID suffix, keeps the newest matching update, and attaches matching DLC to the title. The runtime's generic add-on handling is covered by regional title-ID tests.
 
 DLC for Super Smash Bros. for Nintendo 3DS includes additional fighters and Mii Fighter costumes. This project does not distribute DLC files, unlock data, tickets, keys, or any other game content. Each update and DLC combination still needs real-game validation before it can be described as fully working.
+
+## Version 1.0.1
+
+- Fixes startup when no update CIA is installed by falling back to the base game's RomFS for update-RomFS requests.
+- Adds diagnostic logging for failed filesystem opens.
 
 ## Version 1.0.0
 
@@ -102,7 +107,7 @@ The script bundles MoltenVK into the app and creates a matching `.dmg`.
 - **Release** produces Windows, macOS and Linux packages. Push a version tag such as `v1.0.0` after the initial branch is ready; the release workflow publishes only after the platform builds succeed.
 - Pushes to `main` run build/test jobs and keep temporary artifacts. They do not publish a GitHub Release.
 
-The workspace and application bundle version are both set to `1.0.0`. No release tag is created automatically by this setup.
+The workspace and application bundle version are both set to `1.0.1`. No release tag is created automatically by this setup.
 
 ## RecompLauncher
 
