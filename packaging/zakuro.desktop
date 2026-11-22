@@ -1,8 +1,8 @@
 [Desktop Entry]
-Type=Application
-Name=Mario Kart 7 Recompiled
-Comment=Mario Kart 7 Recompiled for desktop
-Exec=mario-kart-7 %f
+Name=Super Smash Bros. 3DS Recompiled
+Comment=Super Smash Bros. for Nintendo 3DS desktop build
+Exec=smash-3ds %f
 Icon=zakuro
 Terminal=false
-Categories=Game;Emulator;
+Type=Application
+Categories=Game;

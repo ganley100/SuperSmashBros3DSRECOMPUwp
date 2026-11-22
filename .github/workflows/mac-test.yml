@@ -1,5 +1,5 @@
 # Builds the Apple-silicon macOS release package as a temporary Actions artifact.
-name: Mario Kart 7 Recompiled macOS Test Build
+name: Super Smash Bros. 3DS Recompiled macOS Test Build
 
 on:
   push:
@@ -33,15 +33,23 @@ jobs:
           if [ "$version" = "main" ]; then
             version="$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["workspace"]["package"]["version"])')"
           fi
-          sh packaging/macos-app.sh target/release/mario-kart-7 "$version" mario-kart-7-macos-arm64.zip
-          ditto -x -k mario-kart-7-macos-arm64.zip unpacked
+          sh packaging/macos-app.sh target/release/smash-3ds "$version" smash-3ds-macos-arm64.zip
+          ditto -x -k smash-3ds-macos-arm64.zip unpacked
           test -f unpacked/recomplauncher.json
-          test -f "unpacked/Mario Kart 7 Recompiled.app/Contents/Resources/recomplauncher.json"
-          RUST_LOG=info "unpacked/Mario Kart 7 Recompiled.app/Contents/MacOS/mario-kart-7" --test-pattern --headless 1 --mute
+          test -f "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/Resources/recomplauncher.json"
+          RUST_LOG=info "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds" --test-pattern --headless 1 --mute
+          test -f smash-3ds-macos-arm64.dmg
 
       - uses: actions/upload-artifact@v7
         with:
-          name: mario-kart-7-macos-arm64-test
-          path: mario-kart-7-macos-arm64.zip
+          name: smash-3ds-macos-arm64-test
+          path: smash-3ds-macos-arm64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: smash-3ds-macos-arm64-dmg-test
+          path: smash-3ds-macos-arm64.dmg
           if-no-files-found: error
           retention-days: 14

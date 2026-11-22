@@ -23,17 +23,19 @@ echo "$tool_sha256  $work/appimagetool" | sha256sum -c -
 echo "$runtime_sha256  $work/runtime" | sha256sum -c -
 chmod +x "$work/appimagetool"
 
-app=$work/MarioKart7.AppDir
+app=$work/SuperSmashBros3DS.AppDir
 mkdir -p "$app/usr/bin"
-cp "$binary" "$app/usr/bin/mario-kart-7"
-ln -s usr/bin/mario-kart-7 "$app/AppRun"
+cp "$binary" "$app/usr/bin/smash-3ds"
+ln -s usr/bin/smash-3ds "$app/AppRun"
 cp "$here/zakuro.desktop" "$here/zakuro.png" "$app/"
 cp "$here/../recomplauncher.json" "$app/"
+mkdir -p "$app/usr/share/licenses/smash-3ds"
+cp "$here/../LICENSE" "$here/../LICENSE-MIT" "$here/../THIRD_PARTY_NOTICES.md" "$app/usr/share/licenses/smash-3ds/"
 test -f "$app/recomplauncher.json"
 
 # the update information has AppImage updaters, Gear Lever's say, follow the
 # releases
 APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 "$work/appimagetool" \
     --runtime-file "$work/runtime" \
-    --updateinformation "gh-releases-zsync|nvd123-YT|MK7Recomp|latest|mario-kart-7-linux-x86_64.AppImage.zsync" \
+    --updateinformation "gh-releases-zsync|nvd123-YT|SuperSmashBros3DSRECOMP|latest|smash-3ds-linux-x86_64.AppImage.zsync" \
     "$app" "$output"

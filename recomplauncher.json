@@ -1,42 +1,42 @@
 {
   "$schema": "https://recomplauncher.com/schema/recomplauncher.json",
   "format": 1,
-  "name": "Mario Kart 7 Recompiled",
-  "repo": "nvd123-YT/MK7Recomp",
+  "name": "Super Smash Bros. 3DS Recompiled",
+  "repo": "nvd123-YT/SuperSmashBros3DSRECOMP",
   "game": {
     "kind": "iso",
-    "label": "Your own decrypted Mario Kart 7 dump (.3ds, .cci, .cxi or .cia). Japan, Europe, USA, Korea, Taiwan and China releases are supported."
+    "label": "Your own decrypted Super Smash Bros. for Nintendo 3DS dump (.3ds, .cci, .cxi or .cia). Japan, USA and Europe/Australia editions are accepted. Matching update and DLC CIA files may be placed beside the base dump."
   },
   "start": {
     "program": [
-      "mario-kart-7.exe",
-      "mario-kart-7-linux-x86_64.AppImage",
+      "smash-3ds.exe",
+      "smash-3ds-linux-x86_64.AppImage",
       "AppRun",
-      "mario-kart-7",
-      "Mario Kart 7 Recompiled.app/Contents/MacOS/mario-kart-7"
+      "smash-3ds",
+      "Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds"
     ],
     "args": [
       "--game",
       "{game}"
     ],
     "env": {
-      "MARIO_KART_7_SETTINGS_PATH": "{local}/mario-kart-7/settings.toml"
+      "SUPER_SMASH_BROS_3DS_SETTINGS_PATH": "{local}/super-smash-bros-3ds/settings.toml"
     }
   },
   "prepare": {
     "program": [
-      "mario-kart-7.exe",
-      "mario-kart-7-linux-x86_64.AppImage",
+      "smash-3ds.exe",
+      "smash-3ds-linux-x86_64.AppImage",
       "AppRun",
-      "mario-kart-7",
-      "Mario Kart 7 Recompiled.app/Contents/MacOS/mario-kart-7"
+      "smash-3ds",
+      "Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds"
     ],
     "args": [
       "--prepare",
       "--game",
       "{game}"
     ],
-    "label": "Recompiling Mario Kart 7's code on your PC",
+    "label": "Recompiling Super Smash Bros. for Nintendo 3DS's code on your PC",
     "timeout": 3600
   },
   "config": [
@@ -45,7 +45,7 @@
       "format": "toml",
       "file": [
         {
-          "path": "{local}/mario-kart-7/settings.toml"
+          "path": "{local}/super-smash-bros-3ds/settings.toml"
         }
       ],
       "new": {
@@ -73,49 +73,49 @@
     }
   ],
   "saves": [
-    "{config}/mario-kart-7/user/savedata",
-    "{config}/mario-kart-7/user/extdata",
-    "{config}/mario-kart-7/user/nand/system-save",
-    "{config}/mario-kart-7/states",
-    "{config}/mario-kart-7/cheats",
-    "{local}/mario-kart-7/user/savedata",
-    "{local}/mario-kart-7/user/extdata",
-    "{local}/mario-kart-7/user/nand/system-save",
-    "{local}/mario-kart-7/states",
-    "{local}/mario-kart-7/cheats",
-    "{home}/Library/Application Support/mario-kart-7/user/savedata",
-    "{home}/Library/Application Support/mario-kart-7/user/extdata",
-    "{home}/Library/Application Support/mario-kart-7/user/nand/system-save",
-    "{home}/Library/Application Support/mario-kart-7/states",
-    "{home}/Library/Application Support/mario-kart-7/cheats",
-    "{local}/mario-kart-7/settings.toml"
+    "{config}/super-smash-bros-3ds/user/savedata",
+    "{config}/super-smash-bros-3ds/user/extdata",
+    "{config}/super-smash-bros-3ds/user/nand/system-save",
+    "{config}/super-smash-bros-3ds/states",
+    "{config}/super-smash-bros-3ds/cheats",
+    "{local}/super-smash-bros-3ds/user/savedata",
+    "{local}/super-smash-bros-3ds/user/extdata",
+    "{local}/super-smash-bros-3ds/user/nand/system-save",
+    "{local}/super-smash-bros-3ds/states",
+    "{local}/super-smash-bros-3ds/cheats",
+    "{home}/Library/Application Support/super-smash-bros-3ds/user/savedata",
+    "{home}/Library/Application Support/super-smash-bros-3ds/user/extdata",
+    "{home}/Library/Application Support/super-smash-bros-3ds/user/nand/system-save",
+    "{home}/Library/Application Support/super-smash-bros-3ds/states",
+    "{home}/Library/Application Support/super-smash-bros-3ds/cheats",
+    "{local}/super-smash-bros-3ds/settings.toml"
   ],
   "folders": {
     "saves": [
       {
-        "path": "{config}/mario-kart-7/user/savedata",
-        "if": "{config}/mario-kart-7/user/savedata"
+        "path": "{config}/super-smash-bros-3ds/user/savedata",
+        "if": "{config}/super-smash-bros-3ds/user/savedata"
       },
       {
-        "path": "{local}/mario-kart-7/user/savedata",
-        "if": "{local}/mario-kart-7/user/savedata"
+        "path": "{local}/super-smash-bros-3ds/user/savedata",
+        "if": "{local}/super-smash-bros-3ds/user/savedata"
       },
       {
-        "path": "{home}/Library/Application Support/mario-kart-7/user/savedata"
+        "path": "{home}/Library/Application Support/super-smash-bros-3ds/user/savedata"
       }
     ],
     "logs": [
       {
-        "path": "{config}/mario-kart-7",
-        "if": "{config}/mario-kart-7/zakuro.log"
+        "path": "{config}/super-smash-bros-3ds",
+        "if": "{config}/super-smash-bros-3ds/zakuro.log"
       },
       {
-        "path": "{local}/mario-kart-7",
-        "if": "{local}/mario-kart-7/zakuro.log"
+        "path": "{local}/super-smash-bros-3ds",
+        "if": "{local}/super-smash-bros-3ds/zakuro.log"
       },
       {
-        "path": "{home}/Library/Application Support/mario-kart-7",
-        "if": "{home}/Library/Application Support/mario-kart-7/zakuro.log"
+        "path": "{home}/Library/Application Support/super-smash-bros-3ds",
+        "if": "{home}/Library/Application Support/super-smash-bros-3ds/zakuro.log"
       }
     ]
   },
@@ -123,7 +123,7 @@
     {
       "id": "open_saves",
       "label": "Open save data",
-      "help": "Your Mario Kart 7 save archives and game state saves.",
+      "help": "Your Super Smash Bros. for Nintendo 3DS save archives and game state saves.",
       "open": "saves"
     },
     {
@@ -219,7 +219,7 @@
       "id": "mods_enabled",
       "label": "Game mods",
       "group": "Graphics",
-      "help": "Apply code patches and RomFS replacements from the game's mods folder. 3GX plugins such as CTGP-7 are loaded separately.",
+      "help": "Apply code patches and RomFS replacements from the game's mods folder. 3GX plugins such as 3GX plugins are loaded separately.",
       "choices": [
         {
           "label": "On",
@@ -242,7 +242,7 @@
       "id": "plugins_3gx_enabled",
       "label": "3GX plugins",
       "group": "Compatibility",
-      "help": "Load Luma/Citra 3GX plugins, including CTGP-7. Turn off to isolate issues caused by plugin loading.",
+      "help": "Load Luma/Citra 3GX plugins, including 3GX plugins. Turn off to isolate issues caused by plugin loading.",
       "choices": [
         {
           "label": "On",

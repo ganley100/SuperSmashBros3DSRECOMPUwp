@@ -1,146 +1,115 @@
-# Mario Kart 7 Recompiled
+# Super Smash Bros. 3DS Recompiled
 
-<a href="https://recomplauncher.com/game/mk7recomp"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
+An unofficial, game-specific desktop build for **Super Smash Bros. for Nintendo 3DS**.
 
-A game-specific desktop build based on [Zakuro](https://github.com/fearkov/zakuro), a high-level-emulation Nintendo 3DS runtime, and [3dsrecomp](https://github.com/fearkov/3dsrecomp), its ahead-of-time ARM code recompiler.
+This project is based on [Zakuro](https://github.com/fearkov/zakuro), a high-level-emulation Nintendo 3DS runtime, and [3dsrecomp](https://github.com/fearkov/3dsrecomp), its ahead-of-time ARM code recompiler. This fork is configured to accept the three regional releases of Super Smash Bros. for Nintendo 3DS and their matching updates and downloadable content.
 
-This fork is deliberately limited to **Mario Kart 7 for Nintendo 3DS**. Other games are hidden from the library and cannot be launched through the application.
+**Project version: 1.0.0**
+
+> **Compatibility:** Upstream Zakuro's compatibility list reports the USA release as playable with AOT-recompiled code. This standalone fork has not yet been independently validated end-to-end on every platform, region, update or DLC item. See [COMPATIBILITY.md](COMPATIBILITY.md).
 
 ## Supported game dumps
 
-| Region | Nintendo 3DS title ID |
-|---|---|
-| Japan | 0004000000030600 |
-| Europe | 0004000000030700 |
-| USA | 0004000000030800 |
-| Korea | 0004000000030A00 |
-| Taiwan | 000400000008B400 |
-| China | 000400000008B500 |
+| Region | Base game title ID | Update title ID | DLC title ID |
+|---|---|---|---|
+| Japan | `00040000000B8B00` | `0004000E000B8B00` | `0004008C000B8B00` |
+| USA | `00040000000EDF00` | `0004000E000EDF00` | `0004008C000EDF00` |
+| Europe / Australia | `00040000000EE000` | `0004000E000EE000` | `0004008C000EE000` |
 
-The application expects a legally obtained, decrypted dump of the game. It does not include the ROM, game code, textures, music, or other game assets.
+Accepted base-game file formats are `.3ds`, `.cci`, `.cxi` and `.cia`. A legally obtained, decrypted dump is required. Encrypted files cannot be recompiled by this build.
 
-## Version 1.0.5 changes
+### Updates and DLC
 
-- Fixes strided GPU texture copies used by in-game display surfaces, resolving the corrupted/misaligned in-game displays seen in affected courses.
-- Adds regression coverage for differing source/destination strides and contiguous-to-strided transfers.
+Place a matching decrypted update CIA and any matching DLC CIA beside the base-game dump in the same game-library folder. The library pairs add-ons with the base game by their regional title-ID suffix, keeps the newest matching update, and attaches matching DLC to the title. The runtime's generic add-on handling is covered by regional title-ID tests.
 
-## Version 1.0.4 changes
+DLC for Super Smash Bros. for Nintendo 3DS includes additional fighters and Mii Fighter costumes. This project does not distribute DLC files, unlock data, tickets, keys, or any other game content. Each update and DLC combination still needs real-game validation before it can be described as fully working.
 
-- Routes NCCH ExeFS requests for an installed update to that update's own `.code` content, while NCCH Code continues to expose the runtime-mapped update and modded executable image.
+## Version 1.0.0
 
-- Returns decompressed executable bytes for NCCH Code archive requests, matching the image mapped into game memory and avoiding checksum mismatches on compressed `.code` files.
-- Disables speculative vertex-shading look-ahead by default on macOS, preventing stale prefetches when a draw reads vertex data produced by an earlier GPU draw. Set `ZAKURO_SHADE_AHEAD=1` to opt back in; the Vulkan rasterizer remains enabled.
+- Establishes a dedicated Super Smash Bros. for Nintendo 3DS desktop build.
+- Restricts the library and direct-launch checks to Japan, USA and Europe/Australia base-game title IDs.
+- Recognizes the corresponding regional update and DLC title families.
+- Uses dedicated application naming, settings, save-data and log directories.
+- Builds on Windows, macOS Apple silicon, macOS Intel and Linux through GitHub Actions.
+- Keeps generated title-specific native code and game-derived content on the user's own computer.
 
-## Version 1.0.3 changes
+Version 1.0.0 is the initial game-specific project baseline. It does not claim independent gameplay verification across all regions or operating systems.
 
-- Keeps encrypted or damaged Mario Kart 7 CIA dumps visible in the library with an explanatory warning instead of silently hiding them.
+## How to play
 
-## Version 1.0.2 changes
+1. Download and extract the package for your operating system from [GitHub Releases](https://github.com/nvd123-YT/SuperSmashBros3DSRECOMP/releases).
+2. Start **Super Smash Bros. 3DS Recompiled**.
+3. Choose the folder containing your own decrypted game dump. Keep matching update and DLC CIA files in that same folder.
+4. Select the game and press **Recompile**. The ARM code is translated into native code locally by 3dsrecomp. A C compiler such as Clang or GCC is required; the application can offer to download Zig when no supported compiler is available.
+5. Start the game. Recompiled code is used where available, with interpreter fallback for code that has not been translated.
 
-- Adds RecompLauncher setup and direct game launching on Windows, Linux and macOS, with the manifest shipped in every release package.
-- Adds `--game <path>` while keeping positional game paths, plus windowless `--prepare` and borderless `--fullscreen` support.
-- Adds launcher-editable graphics, display, emulation and sound settings, with Big Picture mode starting fullscreen.
-- Declares game save archives, extra data, system saves, save states, cheats and launcher settings for RecompLauncher backups and cloud saves.
-- Uses a lower 2× default 3D rendering resolution to reduce GPU load; higher resolutions remain available.
+The generated title-specific native code, saves, settings and logs stay on your computer. They are not uploaded by this project.
 
-## Version 1.0.1 changes
+You can also prepare the local recompilation from a terminal:
 
-- Adds a 3GX startup loader with checked plugin parsing, title and compatibility checks, plugin executable/heap mapping, ARM bootloader handoff, and cleanup when the game exits.
-- Implements plg:ldr service commands used by normal plugin loading and discovers Luma and CTGP-7 plugin paths from the emulated SD card.
-- Adds GSP framebuffer address translation for the 3GX plugin framebuffer range.
-- Adds CSND PCM8, PCM16, and IMA-ADPCM playback, command-list handling, and service-session resource cleanup.
-- Preserves compatibility with 1.0.0 save-state data.
-- CTGP-7 support is experimental and may or may not work. PSG/noise synthesis, CSND capture DMA, and external SetLoadExeParam injection are not implemented; the loader currently requires an embedded executable-check function.
+```sh
+smash-3ds --prepare --game /path/to/your/decrypted-game.3ds
+```
 
-## Regional update data and CTGP-7
+Replace the example path with the path to your own dump.
 
-Place an update `.cia` beside its matching base-game dump in the same library folder. The launcher recognizes update title IDs in the `0004000E` namespace by their regional suffix, attaches the update to the matching base game, and selects the highest installed update version. The CTGP-7 v1.2 update title IDs are:
+## Runtime features
 
-| Region | Mario Kart 7 update title ID | Update version |
-|---|---|---:|
-| Japan | `0004000E00030600` | 3152 |
-| Europe | `0004000E00030700` | 3152 |
-| USA | `0004000E00030800` | 3152 |
-| Korea | `0004000E00030A00` | 3088 |
+This game-specific build inherits the desktop features implemented by Zakuro:
 
-**CTGP-7 support is experimental and may or may not work.** The 3GX loader is integrated, but CTGP-7 has not been validated end-to-end. The runtime has a startup bootloader, plugin memory mapping, title compatibility checks, the `plg:ldr` service, and a CSND software mixer for PCM8, PCM16, and IMA-ADPCM. PSG/noise synthesis and CSND capture DMA are not implemented. Plugins must contain an embedded executable-check function; external `SetLoadExeParam` injection is not supported yet.
+- Ahead-of-time ARM code recompilation through 3dsrecomp, with interpreter fallback.
+- Keyboard and game-controller input with configurable mappings.
+- Desktop graphics, 3DS screen layouts and scaling options.
+- Audio settings and per-game configuration.
+- Local save data, save states, logs and optional mod/plugin support where implemented by the runtime.
 
-For a title-specific plugin, place the `.3gx` file in the emulated SD-card folder `user/sdmc/luma/plugins/<16-digit-title-id>/` inside the application's configured data directory. The runtime also accepts `user/sdmc/plugins/<16-digit-title-id>/` and the older top-level `luma/plugins/<16-digit-title-id>/` or `plugins/<16-digit-title-id>/` layouts. For Mario Kart 7 USA, use title ID `0004000000030800`. A fallback plugin can be placed at `user/sdmc/luma/plugins/default.3gx` or `user/sdmc/plugins/default.3gx`. The CTGP-7 plugin path `user/sdmc/CTGP-7/resources/CTGP-7.3gx` is also searched automatically. Put the complete extracted `CTGP-7` folder in the `user/sdmc` folder inside the application's data directory; `user/sdmc` is the emulator's guest-visible SD-card root, so the plugin and its additional resources are both visible. The plugin is mapped before the game's main thread starts.
-
-The CTGP-7 plugin has not yet been run end-to-end in this build. Its launcher flow, plugin dependencies, sound behavior, and gameplay still need validation against the real CTGP-7 plugin and matching v1.2 update on macOS.
-
-## Playing
-
-1. Download the package for your operating system from [Releases](https://github.com/nvd123-YT/MK7Recomp/releases).
-2. Extract the download and start Mario Kart 7 Recompiled.
-3. Choose the folder containing your decrypted Mario Kart 7 dump. RecompLauncher can instead set up from the dump file directly.
-4. Select the game and press **Recompile**. The ARM code is recompiled locally on your computer. This is a one-time step for each game dump/build; recompile again when the runtime reports the installed code is outdated.
-5. Start the game. The application uses the local recompiled code where available and falls back to its interpreter for code that is not covered.
-
-The title-specific recompiled output stays on the user's computer. It is not included in this repository, CI artifacts, or GitHub Releases.
-
-## RecompLauncher
-
-Mario Kart 7 Recompiled is listed on [RecompLauncher](https://recomplauncher.com/game/mk7recomp). It accepts your decrypted `.3ds`, `.cci`, `.cxi` or `.cia` dump, runs the local preparation step, and launches the game without opening the normal library window. The launcher exposes supported graphics, display, emulation and audio settings. It also backs up the game's save archives, extra data, system save data, save states, cheats and settings. RecompLauncher keeps the newest ten local backups and offers cloud saves to signed-in players; individual files larger than 64 MB are not backed up by its save service.
-
-The launcher starts in fullscreen automatically in Big Picture mode. The normal desktop default remains windowed; choose Fullscreen in the launcher's Window mode setting to change it.
-
-## Included runtime features
-
-This fork keeps the underlying Zakuro runtime and focuses it on Mario Kart 7:
-
-- Ahead-of-time code recompilation through 3dsrecomp, with interpreter fallback.
-- Keyboard, mouse/touchscreen, and common game-controller input.
-- Configurable key and controller mappings.
-- 3DS screen layouts, scaling, and graphics settings.
-- Audio and per-game settings.
-- Local save data stored separately under the Mario Kart 7 application-data directory.
-
-Features inherited from the runtime remain subject to the support and behaviour of this particular game.
+Individual game features, online services, peripheral behavior, updates and DLC may require further compatibility work. Accepted title IDs are not a guarantee that every feature has been tested.
 
 ## Downloads
 
-- **Windows:** unzip mario-kart-7-windows-x86_64.zip and run mario-kart-7.exe.
-- **macOS Apple silicon:** unzip mario-kart-7-macos-arm64.zip and open Mario Kart 7 Recompiled.app.
-- **macOS Intel:** unzip mario-kart-7-macos-x86_64.zip and open Mario Kart 7 Recompiled.app.
-- **Linux:** use mario-kart-7-linux-x86_64.AppImage, or extract mario-kart-7-linux-x86_64.tar.gz and run ./mario-kart-7.
+The release workflow is configured to produce:
 
-The macOS app is not notarized. On first launch, macOS may block it; allow it through **System Settings → Privacy & Security → Open Anyway**. The Linux AppImage needs the host system's ALSA sound library.
+- **Windows x64:** `smash-3ds-windows-x86_64.exe` and `smash-3ds-windows-x86_64.zip`.
+- **macOS Apple silicon:** `smash-3ds-macos-arm64.dmg` and ZIP, containing `Super Smash Bros. 3DS Recompiled.app`.
+- **macOS Intel:** `smash-3ds-macos-x86_64.dmg` and ZIP.
+- **Linux x64:** `smash-3ds-linux-x86_64.AppImage` and `smash-3ds-linux-x86_64.tar.gz`.
 
-## Building from source
+The macOS app is ad-hoc signed but not notarized. On first launch, macOS may block it; allow it through **System Settings → Privacy & Security → Open Anyway**. The Linux AppImage requires the host system's ALSA sound library.
 
-The project uses the Rust workspace and requires Rust 1.95 or newer.
+## Build from source
 
-~~~
+The project uses a Rust workspace and requires Rust 1.95 or newer. Game-code recompilation also needs an available C compiler or Zig. Build and test the workspace with:
+
+```sh
 cargo build --release --locked -p zakuro
 cargo test --release --workspace
-~~~
+```
 
-The desktop binary is written to target/release/mario-kart-7 (or .exe on Windows). The macOS package script bundles MoltenVK into the app:
+The desktop binary is written to `target/release/smash-3ds` (or `.exe` on Windows).
 
-~~~
-packaging/macos-app.sh target/release/mario-kart-7 1.0.5 mario-kart-7-macos-arm64.zip
-~~~
+On macOS, package a functional application bundle and create both a ZIP and a compressed DMG:
 
-For a normal user, the prebuilt packages on the Releases page are the easiest option.
+```sh
+sh packaging/macos-app.sh target/release/smash-3ds 1.0.0 smash-3ds-macos-arm64.zip
+```
 
-## GitHub Actions and releases
+The script bundles MoltenVK into the app and creates a matching `.dmg`.
 
-- **CI** runs on pushes and pull requests. It builds and tests the Rust workspace on Windows, macOS, and Linux. It also keeps a Windows executable as a temporary Actions artifact.
-- **Release** builds Windows x64, macOS Apple silicon, macOS Intel, and Linux x64 packages. It runs on pushes to `main` and when a version tag is created or pushed. A push to `main` uploads temporary Actions artifacts only; it never publishes a GitHub Release. Version tags publish after all platform builds succeed. Manual branch builds can also set `publish` to `false`.
-- To test a branch without publishing, open **Actions → Mario Kart 7 Recompiled Release → Run workflow**, enter the branch name (such as `main`) in `tag`, and set `publish` to `false`. The packages remain temporary Actions artifacts.
+## GitHub Actions
 
-### Creating version 1.0.4 on GitHub
+- **CI** builds and tests the Rust workspace on Windows, macOS and Linux.
+- **macOS test build** packages the application and performs a smoke test.
+- **Release** produces Windows, macOS and Linux packages. Push a version tag such as `v1.0.0` after the initial branch is ready; the release workflow publishes only after the platform builds succeed.
+- Pushes to `main` run build/test jobs and keep temporary artifacts. They do not publish a GitHub Release.
 
-1. Open the repository and select **Releases → Draft a new release**.
-2. In **Choose a tag**, type `v1.0.4`, then select **Create new tag: v1.0.4**.
-3. Set **Target** to `main` so the release tag points to the 1.0.4 implementation.
-4. Select **Save draft**. Creating the tag on the Releases page triggers the release build. The workflow will attach all four platform packages and publish the draft when they are ready.
+The workspace and application bundle version are both set to `1.0.0`. No release tag is created automatically by this setup.
 
-The Rust workspace version is `1.0.4`. The matching release tag is `v1.0.4`; leave all previous version tags unchanged.
+## RecompLauncher
 
-## Attribution and legal notes
+The repository includes [recomplauncher.json](recomplauncher.json), a game-specific manifest for selecting the correct dump, preparing local recompilation, launching the executable, and locating settings, saves and logs.
 
-This project is an unofficial, game-specific fork of [fearkov/zakuro](https://github.com/fearkov/zakuro) and uses [fearkov/3dsrecomp](https://github.com/fearkov/3dsrecomp). The original Zakuro project and the existing MIT-licensed portions retain their original notices in [LICENSE-MIT](LICENSE-MIT). The project is now distributed under GPL-3.0-or-later to permit integration of GPL-compatible 3DS runtime components; see [LICENSE](LICENSE).
+## Legal and attribution
 
-Mario Kart 7 is a trademark of Nintendo. This project is unofficial and is not affiliated with or endorsed by Nintendo. No game ROM, generated title-specific C code, compiled game library, copyrighted game assets, or other game data is distributed. Users must provide their own lawful game dump and keep the resulting local recompilation on their own device.
+This is an unofficial, game-specific fork based on [fearkov/zakuro](https://github.com/fearkov/zakuro) and [fearkov/3dsrecomp](https://github.com/fearkov/3dsrecomp). Third-party notices are preserved in [LICENSE-MIT](LICENSE-MIT) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The project is distributed under GPL-3.0-or-later; see [LICENSE](LICENSE).
+
+Super Smash Bros. for Nintendo 3DS and related marks are trademarks of Nintendo. This project is not affiliated with, endorsed by or sponsored by Nintendo. No game dump, decryption keys, generated title-specific C code, compiled game library or copyrighted game assets are distributed. Users must provide their own lawful game files and keep generated title-specific output on their own device.

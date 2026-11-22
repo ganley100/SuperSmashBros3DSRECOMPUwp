@@ -1,6 +1,9 @@
-/target
+/target/
 *.log
-/roms
-/dump
+/roms/
+/dump/
 /user/
 /sysdata/
+/recompiled/
+/generated/
+.DS_Store

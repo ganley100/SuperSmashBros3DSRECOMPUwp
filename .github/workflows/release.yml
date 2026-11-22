@@ -1,50 +1,49 @@
-# Builds desktop packages on main for testing; publishes only from version tags.
-name: Mario Kart 7 Recompiled Release
+name: Super Smash Bros. 3DS Recompiled Release
 
 on:
   push:
     branches: [main]
     tags: ["v*"]
-  workflow_run:
-    workflows: ["Build Vulkan Fragment Shaders"]
-    types: [completed]
-    branches: [main]
-  create:
   workflow_dispatch:
     inputs:
       tag:
-        description: an existing tag to release, or a branch to build when publish is off
+        description: Existing version tag or branch to build
         required: true
+        type: string
       publish:
-        description: publish a GitHub Release after all builds succeed
+        description: Publish a GitHub Release after all platform builds succeed
+        required: true
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: write
 
+concurrency:
+  group: smash-3ds-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
-    if: ${{ (github.event_name != 'create' || (github.event.ref_type == 'tag' && startsWith(github.event.ref, 'v'))) && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
-            archive: mario-kart-7-windows-x86_64.zip
-          # Build on an older Linux userspace for broader compatibility.
+            archive: smash-3ds-windows-x86_64.zip
           - os: ubuntu-latest
             container: ubuntu:22.04
-            archive: mario-kart-7-linux-x86_64.tar.gz
+            archive: smash-3ds-linux-x86_64.tar.gz
           - os: macos-latest
-            archive: mario-kart-7-macos-arm64.zip
+            archive: smash-3ds-macos-arm64.zip
+            dmg: smash-3ds-macos-arm64.dmg
           - os: macos-15-intel
-            archive: mario-kart-7-macos-x86_64.zip
-            try: --rasterizer software
+            archive: smash-3ds-macos-x86_64.zip
+            dmg: smash-3ds-macos-x86_64.dmg
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     steps:
-      - name: Linux build tools
+      - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |
           apt-get update
@@ -59,29 +58,32 @@ jobs:
       - name: Build desktop runtime
         run: cargo build --release --locked -p zakuro
 
-      - name: Package for Windows
+      - name: Package Windows executable and ZIP
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           Get-Content recomplauncher.json -Raw | ConvertFrom-Json | Out-Null
-          Compress-Archive -Path target/release/mario-kart-7.exe, README.md, LICENSE, recomplauncher.json -DestinationPath ${{ matrix.archive }}
+          Copy-Item target/release/smash-3ds.exe smash-3ds-windows-x86_64.exe
+          Compress-Archive -Path target/release/smash-3ds.exe, README.md, COMPATIBILITY.md, LICENSE, LICENSE-MIT, THIRD_PARTY_NOTICES.md, recomplauncher.json -DestinationPath ${{ matrix.archive }}
+          New-Item -ItemType Directory -Force -Path package-check | Out-Null
           Expand-Archive -Path ${{ matrix.archive }} -DestinationPath package-check -Force
-          if (!(Test-Path package-check/recomplauncher.json)) { throw "recomplauncher.json is missing from the Windows package" }
+          if (!(Test-Path package-check/recomplauncher.json)) { throw "RecompLauncher manifest missing from Windows package" }
           $env:RUST_LOG = 'info'
-          target/release/mario-kart-7.exe --test-pattern --headless 1 --mute
+          target/release/smash-3ds.exe --test-pattern --headless 1 --mute
 
-      - name: Package for Linux
+      - name: Package Linux tarball and AppImage
         if: runner.os == 'Linux'
         run: |
           python3 -m json.tool recomplauncher.json > /dev/null
-          tar czf ${{ matrix.archive }} README.md LICENSE recomplauncher.json -C target/release mario-kart-7
+          tar czf ${{ matrix.archive }} README.md COMPATIBILITY.md LICENSE LICENSE-MIT THIRD_PARTY_NOTICES.md recomplauncher.json -C target/release smash-3ds
           tar -tzf ${{ matrix.archive }} | grep -Fx recomplauncher.json
-          sh packaging/appimage.sh target/release/mario-kart-7 mario-kart-7-linux-x86_64.AppImage
-          APPIMAGE_EXTRACT_AND_RUN=1 ./mario-kart-7-linux-x86_64.AppImage --appimage-extract >/dev/null
+          sh packaging/appimage.sh target/release/smash-3ds smash-3ds-linux-x86_64.AppImage
+          APPIMAGE_EXTRACT_AND_RUN=1 ./smash-3ds-linux-x86_64.AppImage --appimage-extract >/dev/null
           test -f squashfs-root/recomplauncher.json
           rm -rf squashfs-root
-          APPIMAGE_EXTRACT_AND_RUN=1 RUST_LOG=info ./mario-kart-7-linux-x86_64.AppImage --test-pattern --headless 1 --mute
+          APPIMAGE_EXTRACT_AND_RUN=1 RUST_LOG=info ./smash-3ds-linux-x86_64.AppImage --test-pattern --headless 1 --mute
 
-      - name: Package for macOS
+      - name: Package macOS app, ZIP and DMG
         if: runner.os == 'macOS'
         env:
           VERSION: ${{ inputs.tag || github.ref_name }}
@@ -90,22 +92,42 @@ jobs:
           if [ "$version" = "main" ]; then
             version="$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["workspace"]["package"]["version"])')"
           fi
-          sh packaging/macos-app.sh target/release/mario-kart-7 "$version" ${{ matrix.archive }}
+          sh packaging/macos-app.sh target/release/smash-3ds "$version" ${{ matrix.archive }}
           ditto -x -k ${{ matrix.archive }} unpacked
           test -f unpacked/recomplauncher.json
-          test -f "unpacked/Mario Kart 7 Recompiled.app/Contents/Resources/recomplauncher.json"
-          RUST_LOG=info "unpacked/Mario Kart 7 Recompiled.app/Contents/MacOS/mario-kart-7" --test-pattern --headless 1 --mute ${{ matrix.try }}
+          test -f "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/Resources/recomplauncher.json"
+          RUST_LOG=info "unpacked/Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds" --test-pattern --headless 1 --mute
+          hdiutil attach ${{ matrix.dmg }} -readonly -nobrowse -mountpoint dmg-mount
+          test -f "dmg-mount/Super Smash Bros. 3DS Recompiled.app/Contents/MacOS/smash-3ds"
+          hdiutil detach dmg-mount -quiet
 
-      - uses: actions/upload-artifact@v7
+      - name: Upload platform ZIP or tarball
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.archive }}
           path: |
             ${{ matrix.archive }}
-            mario-kart-7-linux-x86_64.AppImage*
+            smash-3ds-linux-x86_64.AppImage*
+
+      - name: Upload standalone Windows executable
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: smash-3ds-windows-x86_64.exe
+          path: smash-3ds-windows-x86_64.exe
+          if-no-files-found: error
+
+      - name: Upload macOS DMG
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.dmg }}
+          path: ${{ matrix.dmg }}
+          if-no-files-found: error
 
   release:
     needs: build
-    if: ${{ needs.build.result == 'success' && ((github.event_name == 'workflow_dispatch' && inputs.publish && startsWith(inputs.tag, 'v')) || (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/v'))) }}
+    if: ${{ needs.build.result == 'success' && ((github.event_name == 'workflow_dispatch' && inputs.publish && startsWith(inputs.tag, 'v')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
@@ -119,19 +141,16 @@ jobs:
           TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           cat > notes.md <<'NOTES'
-          This is an Mario Kart 7-only desktop runtime based on Zakuro and 3dsrecomp.
+          Super Smash Bros. 3DS Recompiled is an unofficial, game-specific desktop build based on Zakuro and 3dsrecomp.
 
-          No game ROM, game assets, generated title-specific C code, or compiled title library is included. Use your own lawfully obtained, decrypted Mario Kart 7 dump. Add it to a library folder, then use Recompile in the application; the title-specific output stays on your computer.
+          Use your own lawfully obtained, decrypted Super Smash Bros. for Nintendo 3DS dump. Matching regional updates and DLC may be placed beside the base-game dump. No game ROM, keys, game assets, generated title-specific C code or compiled game library is included.
 
-          CTGP-7-supported regional Mario Kart 7 title IDs: Japan 0004000000030600, Europe 0004000000030700, USA 0004000000030800, and Korea 0004000000030A00.
+          The USA release is listed as playable with AOT-recompiled code by upstream Zakuro. This standalone fork still needs independent gameplay testing.
 
-          CTGP-7 support is experimental and may or may not work. It has not been validated end-to-end with this build.
-
-          Windows: extract mario-kart-7-windows-x86_64.zip and run mario-kart-7.exe.
-          macOS Apple silicon: extract mario-kart-7-macos-arm64.zip and open Mario Kart 7 Recompiled.app.
-          macOS Intel: extract mario-kart-7-macos-x86_64.zip and open Mario Kart 7 Recompiled.app.
-          Linux: run mario-kart-7-linux-x86_64.AppImage, or extract mario-kart-7-linux-x86_64.tar.gz and run ./mario-kart-7.
+          Windows x64: run smash-3ds-windows-x86_64.exe or extract the ZIP.
+          macOS: open Super Smash Bros. 3DS Recompiled.app from the matching DMG or ZIP.
+          Linux x64: run smash-3ds-linux-x86_64.AppImage, or extract the tarball and run ./smash-3ds.
 
           The macOS app is not notarized. On first launch, allow it in System Settings > Privacy & Security > Open Anyway.
           NOTES
-          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --title "Mario Kart 7 Recompiled $TAG" --notes-file notes.md --generate-notes
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --title "Super Smash Bros. 3DS Recompiled $TAG" --notes-file notes.md

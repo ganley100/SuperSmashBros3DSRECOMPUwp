@@ -1,5 +1,5 @@
-# Builds and tests Mario Kart 7 on Linux, macOS and Windows.
-name: Mario Kart 7 Recompiled CI
+# Builds and tests Super Smash Bros. for Nintendo 3DS on Linux, macOS and Windows.
+name: Super Smash Bros. 3DS Recompiled CI
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,5 +36,5 @@ jobs:
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v7
         with:
-          name: mario-kart-7-windows
-          path: target/release/mario-kart-7.exe
+          name: smash-3ds-windows
+          path: target/release/smash-3ds.exe

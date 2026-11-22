@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key>
-  <string>Mario Kart 7 Recompiled</string>
+  <string>Super Smash Bros. 3DS Recompiled</string>
   <key>CFBundleDisplayName</key>
-  <string>Mario Kart 7 Recompiled</string>
+  <string>Super Smash Bros. 3DS Recompiled</string>
   <key>CFBundleIdentifier</key>
-  <string>io.github.nvd123-yt.mariokart7recompiled</string>
+  <string>io.github.nvd123-yt.smash3dsrecompiled</string>
   <key>CFBundleExecutable</key>
-  <string>mario-kart-7</string>
+  <string>smash-3ds</string>
   <key>CFBundleIconFile</key>
   <string>zakuro</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.0.5</string>
+  <string>1.0.0</string>
   <key>CFBundleVersion</key>
-  <string>1.0.5</string>
+  <string>1.0.0</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.games</string>
   <key>LSMinimumSystemVersion</key>

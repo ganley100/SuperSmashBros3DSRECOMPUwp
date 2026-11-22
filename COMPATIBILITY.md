@@ -1,22 +1,33 @@
 # Compatibility
 
-This fork intentionally supports only **Mario Kart 7 for Nintendo 3DS** as a directly launchable game.
+This repository is configured specifically for **Super Smash Bros. for Nintendo 3DS**. It accepts the regional base-game title IDs below and hides unrelated titles from the game library.
 
-| Region | Base-game title ID | Base game | CTGP-7 v1.2 update title ID | Update version |
-|---|---|---|---|---:|
-| Japan | 0004000000030600 | Supported | 0004000E00030600 | 3152 |
-| Europe | 0004000000030700 | Supported | 0004000E00030700 | 3152 |
-| USA | 0004000000030800 | Supported | 0004000E00030800 | 3152 |
-| Korea | 0004000000030A00 | Supported | 0004000E00030A00 | 3088 |
-| Taiwan | 000400000008B400 | Supported | Not supported by CTGP-7 | — |
-| China | 000400000008B500 | Supported | Not supported by CTGP-7 | — |
+| Region | Base-game title ID | Update title ID | DLC title ID | Library support |
+|---|---|---|---|---|
+| Japan | `00040000000B8B00` | `0004000E000B8B00` | `0004008C000B8B00` | Accepted |
+| USA | `00040000000EDF00` | `0004000E000EDF00` | `0004008C000EDF00` | Accepted |
+| Europe / Australia | `00040000000EE000` | `0004000E000EE000` | `0004008C000EE000` | Accepted |
 
-## Update handling
+Upstream Zakuro's compatibility list reports the USA base game as playable with ahead-of-time recompiled code. That is an upstream compatibility result, not a claim that this game-specific fork has passed independent end-to-end tests.
 
-Update data is a separate title with the `0004000E` high word. The regional suffix matches the base game's title ID. Put the decrypted update CIA in the same folder as the base game; the library pairs it automatically and selects the highest update version it finds. A base ROM's title ID does not change just because update data is present.
+## Updates
 
-## CTGP-7
+The update title family uses the `0004000E` namespace and preserves the regional suffix of the base title. Place a decrypted update CIA beside its matching base dump. The library selects the highest matching update version it finds.
 
-CTGP-7 officially requires the matching regional Mario Kart 7 v1.2 update and supports USA, Europe, Japan and Korea. This fork recognizes and attaches those four regional update titles, but **CTGP-7 is not currently playable here**: the runtime does not implement Luma3DS 3GX plugin execution or the title-install flow used by the CTGP-7 installer. RomFS and code-patch mod support alone cannot replace those systems.
+## Downloadable content
 
-All other Nintendo 3DS titles are filtered out of the library and rejected when started directly. Decrypted game data is required. The title-specific recompiled output is generated locally and is not distributed with the project.
+The DLC title family uses the `0004008C` namespace and preserves the same regional suffix:
+
+- Japan: `0004008C000B8B00`
+- USA: `0004008C000EDF00`
+- Europe / Australia: `0004008C000EE000`
+
+Place decrypted DLC CIA files beside the matching base-game dump. The library recognizes them as DLC and associates them with that game. Tests cover all three regional DLC title IDs and verify the add-on association path. This does not guarantee every DLC item has been validated in actual gameplay.
+
+## Game files and recompilation
+
+Accepted game file extensions are `.3ds`, `.cci`, `.cxi` and `.cia`. A legally obtained, decrypted dump is required. Encrypted or damaged data may be displayed with an explanatory warning but cannot be recompiled by this build.
+
+Generated native code is created locally and is not committed to this repository, CI artifacts or GitHub Releases. Do not treat a title ID being accepted by the library as proof that its content has been tested.
+
+When reporting a compatibility issue, include the game region, title ID, project version, operating system, whether an update or DLC was present, and the relevant runtime log.

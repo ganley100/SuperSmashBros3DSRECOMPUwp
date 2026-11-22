@@ -1,5 +1,5 @@
 name: Game report
-description: How a game runs in Zakuro
+description: Report how Super Smash Bros. for Nintendo 3DS runs in this standalone build
 labels: ["game report"]
 body:
   - type: input
@@ -19,7 +19,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Zakuro version
+      label: Project version / runtime revision
       placeholder: v0.2.7
     validations:
       required: true
