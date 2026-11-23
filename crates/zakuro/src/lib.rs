@@ -1387,6 +1387,7 @@ impl App {
                 self.menus.menu_open = false;
                 self.keyboard.release();
             }
+            Action::FrameAdvance => self.advance_one_frame(),
             Action::Reset => {
                 if let Some(path) = self.game.as_ref().map(|game| game.path.clone()) {
                     if let Err(error) = self.play(&path) {
