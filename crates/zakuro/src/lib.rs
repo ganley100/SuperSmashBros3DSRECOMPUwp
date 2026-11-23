@@ -127,6 +127,8 @@ pub fn run_with(linked: Option<Linked>, overlay: Option<Box<dyn GameOverlay>>) {
         library: Library::new(data_dir.clone()),
         data_dir,
         game: None,
+        record_on_start: None,
+        replay_on_start: None,
         menus: {
             let mut menus = Menus::default();
             menus.slot = 1;
@@ -197,6 +199,16 @@ fn game_save_data_dir(data_dir: &Path, program_id: u64) -> PathBuf {
 /// the folder containing a title's numbered save states.
 fn game_state_dir(data_dir: &Path, program_id: u64) -> PathBuf {
     data_dir.join("states").join(format!("{program_id:016X}"))
+}
+
+/// the folder containing a game's input recordings.
+fn game_replay_dir(data_dir: &Path, program_id: u64) -> PathBuf {
+    data_dir.join("replays").join(format!("{program_id:016X}"))
+}
+
+/// the most recent match recording for a game.
+fn game_replay_path(data_dir: &Path, program_id: u64) -> PathBuf {
+    game_replay_dir(data_dir, program_id).join("latest.replay")
 }
 
 /// opens a folder in the system's file manager.
@@ -419,6 +431,10 @@ struct App {
     overlay_corner: Option<String>,
     data_dir: Option<PathBuf>,
     game: Option<Running>,
+    /// a replay file to begin recording from the next game boot.
+    record_on_start: Option<PathBuf>,
+    /// a replay file to play from the next game boot.
+    replay_on_start: Option<PathBuf>,
     library: Library,
     menus: Menus,
     jobs: Vec<Job>,
@@ -755,13 +771,15 @@ impl App {
             config.dlp_child = dlp_child.map(|child| child.path);
         }
         // a recording starts the clock at a known time, for playing it back
-        let record = std::env::var_os("ZAKURO_RECORD").map(PathBuf::from);
+        let requested_record = self.record_on_start.take();
+        let record = requested_record.clone().or_else(|| std::env::var_os("ZAKURO_RECORD").map(PathBuf::from));
         let clock = zakuro_core::memory::config::host_clock();
         if record.is_some() {
             config.clock = Some(clock);
         }
         // and plays back from the clock it was made at
-        let replay = match std::env::var_os("ZAKURO_REPLAY").map(PathBuf::from) {
+        let replay_file = self.replay_on_start.take().or_else(|| std::env::var_os("ZAKURO_REPLAY").map(PathBuf::from));
+        let replay = match replay_file {
             Some(file) => {
                 let replay = zakuro_core::replay::Replay::open(&file).map_err(|error| format!("could not read {}, {error}", file.display()))?;
                 log::info!("playing back the inputs in {}", file.display());
@@ -791,6 +809,9 @@ impl App {
                 Ok(recorder) => {
                     log::info!("recording the inputs to {}", record.display());
                     game.recorder = Some(recorder);
+                }
+                Err(error) if requested_record.is_some() => {
+                    return Err(format!("could not start recording to {}, {error}", record.display()));
                 }
                 Err(error) => log::warn!("could not record to {}, {error}", record.display()),
             }
@@ -895,6 +916,8 @@ impl App {
                 KeyCode::F10 if self.active.layout.other_screen() != self.active.layout => self.set_layout(self.active.layout.other_screen()),
                 KeyCode::F11 => self.toggle_fullscreen(),
                 KeyCode::F5 if self.game.is_some() => self.save_state(),
+                KeyCode::F6 if self.game.is_some() => self.toggle_recording(),
+                KeyCode::F7 if self.game.is_some() => self.play_replay(),
                 KeyCode::F8 if self.game.is_some() => self.load_state(),
                 _ => {}
             }
@@ -1290,6 +1313,21 @@ impl App {
             }
             Action::SaveState => self.save_state(),
             Action::LoadState => self.load_state(),
+            Action::RecordMatch => self.start_recording(),
+            Action::StopRecording => self.stop_recording(),
+            Action::PlayReplay => self.play_replay(),
+            Action::OpenReplays(program_id) => {
+                match &self.data_dir {
+                    Some(data_dir) => {
+                        let folder = game_replay_dir(data_dir, program_id);
+                        match std::fs::create_dir_all(&folder) {
+                            Ok(()) => show_folder(&folder),
+                            Err(error) => self.menus.message = Some(format!("The recordings folder can't be opened: {error}")),
+                        }
+                    }
+                    None => self.menus.message = Some("The application data folder isn't available on this system.".to_owned()),
+                }
+            }
             Action::HostRoom => self.host_room(),
             Action::JoinRoom => {
                 let address = self.settings.room_address.clone();
@@ -1684,6 +1722,77 @@ impl App {
         Some(self.data_dir.as_ref()?.join("states").join(format!("{program_id:016X}")).join(format!("{slot}.state")))
     }
 
+    /// the most recent input recording of the running game.
+    fn replay_path(&self) -> Option<PathBuf> {
+        let program_id = self.game.as_ref()?.system.title.as_ref()?.program_id();
+        Some(game_replay_path(self.data_dir.as_ref()?, program_id))
+    }
+
+    /// F6 starts a recording from a clean boot, or stops the one in progress.
+    fn toggle_recording(&mut self) {
+        if self.game.as_ref().is_some_and(|game| game.recorder.is_some()) {
+            self.stop_recording();
+        } else {
+            self.start_recording();
+        }
+    }
+
+    /// restarts the running game and records inputs from its first frame.
+    fn start_recording(&mut self) {
+        let Some(game_path) = self.game.as_ref().map(|game| game.path.clone()) else { return };
+        let Some(path) = self.replay_path() else {
+            self.menus.message = Some("Match recording needs the application's data folder.".to_owned());
+            return;
+        };
+        if let Some(folder) = path.parent() {
+            if let Err(error) = std::fs::create_dir_all(folder) {
+                self.menus.message = Some(format!("The recordings folder can't be created: {error}"));
+                return;
+            }
+        }
+        self.record_on_start = Some(path);
+        self.replay_on_start = None;
+        if let Err(error) = self.play(&game_path) {
+            self.record_on_start = None;
+            self.menus.message = Some(format!("The match recording couldn't start: {error}"));
+        } else {
+            self.menus.toast = Some(("Recording match — F6 stops and saves".to_owned(), Instant::now()));
+        }
+    }
+
+    /// closes the recording cleanly so all buffered inputs reach disk.
+    fn stop_recording(&mut self) {
+        let Some(recorder) = self.game.as_mut().and_then(|game| game.recorder.take()) else {
+            self.menus.message = Some("There isn't a match being recorded.".to_owned());
+            return;
+        };
+        match recorder.finish() {
+            Ok(()) => self.menus.toast = Some(("Match recording saved".to_owned(), Instant::now())),
+            Err(error) => self.menus.message = Some(format!("The match recording couldn't be finished: {error}")),
+        }
+    }
+
+    /// restarts the running game with the most recent recorded input stream.
+    fn play_replay(&mut self) {
+        let Some(game_path) = self.game.as_ref().map(|game| game.path.clone()) else { return };
+        let Some(path) = self.replay_path() else {
+            self.menus.message = Some("Replay playback needs the application's data folder.".to_owned());
+            return;
+        };
+        if !path.is_file() {
+            self.menus.message = Some("There is no recorded match to replay yet.".to_owned());
+            return;
+        }
+        self.record_on_start = None;
+        self.replay_on_start = Some(path);
+        if let Err(error) = self.play(&game_path) {
+            self.replay_on_start = None;
+            self.menus.message = Some(format!("The match replay couldn't start: {error}"));
+        } else {
+            self.menus.toast = Some(("Playing back the last match — F7 restarts it".to_owned(), Instant::now()));
+        }
+    }
+
     /// saves the running game's state to the slot chosen.
     fn save_state(&mut self) {
         let slot = self.menus.slot;
@@ -1764,7 +1873,14 @@ impl App {
         let program_id = self.program_id();
         let (Some(gui), Some(window)) = (&mut self.gui, &self.window) else { return Overlay::default() };
         let show_fps = self.settings.show_fps;
-        let game = self.game.as_ref().map(|game| (game.name.clone(), game.fps, game.system.recompiled.is_some()));
+        let game = self.game.as_ref().map(|game| (
+            game.name.clone(),
+            game.fps,
+            game.system.recompiled.is_some(),
+            game.recorder.is_some(),
+            game.replay.is_some(),
+        ));
+        let has_replay = self.replay_path().is_some_and(|path| path.is_file());
         let fast = self.fast_forwarding;
         let keyboard = self.game.as_ref().and_then(|game| game.system.keyboard_request().cloned());
         let room = self.room.as_ref().filter(|_| self.menus.multiplayer_open).map(|connection| {
@@ -1784,8 +1900,21 @@ impl App {
         let mut actions = Vec::new();
         let overlay = gui.frame(window, |ui| {
             match &game {
-                Some((name, fps, recompiled)) => {
-                    actions.extend(menus.game(ui, name, program_id, show_fps.then_some(*fps), *recompiled, fast, jobs, waiting.len(), saved.as_deref()));
+                Some((name, fps, recompiled, recording, replaying)) => {
+                    actions.extend(menus.game(
+                        ui,
+                        name,
+                        program_id,
+                        show_fps.then_some(*fps),
+                        *recompiled,
+                        *recording,
+                        *replaying,
+                        has_replay,
+                        fast,
+                        jobs,
+                        waiting.len(),
+                        saved.as_deref(),
+                    ));
                     if let Some(text) = &corner {
                         menus::corner(ui.ctx(), text);
                     }
@@ -1930,6 +2059,10 @@ mod tests {
         assert_eq!(
             game_state_dir(root, title_id),
             root.join("states/00040000000EDF00")
+        );
+        assert_eq!(
+            game_replay_path(root, title_id),
+            root.join("replays/00040000000EDF00/latest.replay")
         );
     }
 

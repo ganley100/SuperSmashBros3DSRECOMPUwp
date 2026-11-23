@@ -43,6 +43,11 @@ pub enum Action {
     /// save the game's state to the slot chosen, or load it from there.
     SaveState,
     LoadState,
+    /// begin or end a match input recording, or replay the most recent one.
+    RecordMatch,
+    StopRecording,
+    PlayReplay,
+    OpenReplays(u64),
     /// open a room and join it, join another's, or leave the one joined.
     HostRoom,
     JoinRoom,
@@ -409,6 +414,9 @@ impl Menus {
         program_id: Option<u64>,
         fps: Option<f32>,
         recompiled: bool,
+        recording: bool,
+        replaying: bool,
+        has_replay: bool,
         fast: bool,
         jobs: &[Job],
         waiting: usize,
@@ -485,6 +493,33 @@ impl Menus {
                         .clicked()
                     {
                         actions.push(Action::LoadState);
+                    }
+                });
+                ui.collapsing("Match replays", |ui| {
+                    if recording {
+                        ui.label(RichText::new("Recording from the start of this run").strong());
+                        if ui.add_sized([200.0, 28.0], egui::Button::new("Stop and save recording (F6)")).clicked() {
+                            actions.push(Action::StopRecording);
+                        }
+                    } else if ui.add_sized([200.0, 28.0], egui::Button::new("Record match from restart (F6)"))
+                        .on_hover_text("Restarts the game and records every input from its first frame.")
+                        .clicked()
+                    {
+                        actions.push(Action::RecordMatch);
+                    }
+                    if replaying {
+                        ui.label(RichText::new("Playing a recording; live controls are ignored").weak());
+                    }
+                    if ui.add_enabled(
+                        has_replay,
+                        egui::Button::new("Replay last match (F7)").min_size(Vec2::new(200.0, 28.0)),
+                    ).clicked() {
+                        actions.push(Action::PlayReplay);
+                    }
+                    if let Some(program_id) = program_id {
+                        if ui.add_sized([200.0, 26.0], egui::Button::new("Open recordings folder")).clicked() {
+                            actions.push(Action::OpenReplays(program_id));
+                        }
                     }
                 });
                 if let Some(program_id) = program_id {

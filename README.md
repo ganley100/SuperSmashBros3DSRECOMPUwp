@@ -66,9 +66,19 @@ This game-specific build inherits the desktop features implemented by Zakuro:
 - Keyboard and game-controller input with configurable mappings.
 - Desktop graphics, 3DS screen layouts and scaling options.
 - Audio settings and per-game configuration.
-- Local save data, save states, logs and optional mod/plugin support where implemented by the runtime.
+- Local save data, save states, match replay recording/playback, logs and optional mod/plugin support where implemented by the runtime.
 
 Individual game features, online services, peripheral behavior, updates and DLC may require further compatibility work. Accepted title IDs are not a guarantee that every feature has been tested.
+
+## Match replays
+
+The pause menu's **Match replays** section can record and replay a complete run without command-line environment variables:
+
+- **F6** starts a recording from a fresh game boot. Press F6 again, or choose **Stop and save recording**, to finish it.
+- **F7** restarts the game and plays the most recent recording. Live keyboard/controller input is ignored during playback.
+- **Open recordings folder** opens the per-game recording directory. The latest recording is stored as `replays/<TITLE_ID>/latest.replay` inside the application's data folder.
+
+Recordings contain the input stream and original emulated clock, not game assets. Use the same game dump, update, DLC and settings when replaying for the most reliable result. Starting a recording deliberately restarts the game so playback can reproduce the entire run from its first frame.
 
 ## Downloads
 

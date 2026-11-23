@@ -29,7 +29,8 @@ impl Recorder {
         if self.last != Some(input) {
             let (x, y) = input.touch.map_or((-1, -1), |(x, y)| (x as i32, y as i32));
             let [tilt_x, tilt_y] = input.tilt;
-            let line = format!(
+            if writeln!(
+                self.out,
                 "{} {:x} {:?} {:?} {x} {y} {tilt_x:?} {tilt_y:?} {:?} {:?}",
                 self.frame,
                 input.buttons.bits(),
@@ -37,14 +38,25 @@ impl Recorder {
                 input.circle_y,
                 input.c_stick_x,
                 input.c_stick_y
-            );
-            // written through at once, the run may end in a crash
-            if writeln!(self.out, "{line}").and_then(|()| self.out.flush()).is_err() {
+            )
+            .is_err()
+            {
                 log::warn!("could not write to the input recording");
             }
             self.last = Some(input);
         }
         self.frame += 1;
+        // Flushing on every button transition turns replay capture into
+        // synchronous disk I/O in the frame loop. Flush once every 60 frames;
+        // finish() flushes the final partial interval when recording stops.
+        if self.frame % 60 == 0 && self.out.flush().is_err() {
+            log::warn!("could not flush the input recording");
+        }
+    }
+
+    /// finishes a recording and reports any buffered write error.
+    pub fn finish(mut self) -> std::io::Result<()> {
+        self.out.flush()
     }
 }
 
@@ -133,7 +145,7 @@ mod tests {
         for frame in 0..10 {
             recorder.record(if (3..6).contains(&frame) { pressed } else { InputState::default() });
         }
-        drop(recorder);
+        recorder.finish().unwrap();
         let mut replay = Replay::open(&path).unwrap();
         assert_eq!(replay.clock(), 1234);
         for frame in 0..10 {
