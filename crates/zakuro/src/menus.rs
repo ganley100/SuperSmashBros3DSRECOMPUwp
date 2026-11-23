@@ -48,6 +48,8 @@ pub enum Action {
     StopRecording,
     PlayReplay,
     OpenReplays(u64),
+    /// run one emulated frame while paused.
+    FrameAdvance,
     /// open a room and join it, join another's, or leave the one joined.
     HostRoom,
     JoinRoom,
@@ -472,6 +474,12 @@ impl Menus {
                 if wide(ui, "Resume") {
                     actions.push(Action::Resume);
                 }
+                if ui.add_sized([200.0, 28.0], egui::Button::new("Advance one frame (F2)"))
+                    .on_hover_text("Runs exactly one emulated frame, then remains paused.")
+                    .clicked()
+                {
+                    actions.push(Action::FrameAdvance);
+                }
                 if wide(ui, "Reset") {
                     actions.push(Action::Reset);
                 }
@@ -510,9 +518,10 @@ impl Menus {
                     if replaying {
                         ui.label(RichText::new("Playing a recording; live controls are ignored").weak());
                     }
+                    let replay_label = if replaying { "Stop replay (F7)" } else { "Replay last match (F7)" };
                     if ui.add_enabled(
-                        has_replay,
-                        egui::Button::new("Replay last match (F7)").min_size(Vec2::new(200.0, 28.0)),
+                        replaying || has_replay,
+                        egui::Button::new(replay_label).min_size(Vec2::new(200.0, 28.0)),
                     ).clicked() {
                         actions.push(Action::PlayReplay);
                     }

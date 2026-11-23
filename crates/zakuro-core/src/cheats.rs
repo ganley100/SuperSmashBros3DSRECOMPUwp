@@ -178,19 +178,25 @@ struct CodeRanges {
     modules: Vec<(u32, u32)>,
     /// what the cheats changed of them, the text and the modules by index.
     text_changed: bool,
-    modules_changed: Vec<usize>,
+    modules_changed: Vec<bool>,
     /// what the enhancement running overwrote, none for a player's cheat.
     overwrote: Option<BTreeMap<u32, Overwrote>>,
 }
 
 impl CodeRanges {
+    #[cfg(test)]
+    fn changed_module_indices(&self) -> Vec<usize> {
+        self.modules_changed.iter().enumerate().filter_map(|(index, changed)| changed.then_some(index)).collect()
+    }
+
     fn of(system: &System) -> CodeRanges {
         let text = system.title.as_ref().map_or((0, 0), |title| {
             let text = &title.exheader.text;
             (text.address, text.address + text.num_pages * PAGE_SIZE)
         });
-        let modules = system.cro.modules.iter().map(|module| (module.base, module.base + module.size)).collect();
-        CodeRanges { text, modules, text_changed: false, modules_changed: Vec::new(), overwrote: None }
+        let modules: Vec<_> = system.cro.modules.iter().map(|module| (module.base, module.base + module.size)).collect();
+        let modules_changed = vec![false; modules.len()];
+        CodeRanges { text, modules, text_changed: false, modules_changed, overwrote: None }
     }
 
     fn wrote(&mut self, addr: u32) {
@@ -198,8 +204,8 @@ impl CodeRanges {
             self.text_changed = true;
         }
         for (index, &(start, end)) in self.modules.iter().enumerate() {
-            if (start..end).contains(&addr) && !self.modules_changed.contains(&index) {
-                self.modules_changed.push(index);
+            if (start..end).contains(&addr) {
+                self.modules_changed[index] = true;
             }
         }
     }
@@ -241,9 +247,11 @@ pub fn run(system: &mut System) {
             let stale = library.check(&mut system.memory);
             log::info!("cheats changed the game's code, {stale} functions run in the interpreter");
         }
-        for index in ranges.modules_changed {
-            let module = &system.cro.modules[index];
-            library.place(&module.name, module.base, &mut system.memory);
+        for (index, changed) in ranges.modules_changed.into_iter().enumerate() {
+            if changed {
+                let module = &system.cro.modules[index];
+                library.place(&module.name, module.base, &mut system.memory);
+            }
         }
     }
 }
@@ -432,6 +440,20 @@ mod tests {
     const FILE: &str = "[Infinite health]\n*citra_enabled\n*by someone\n00123456 00000063\n\n[Walk through walls]\nD3000000 00100000\n20000004 000000FF\nD2000000 00000000\n";
 
     #[test]
+    fn module_ranges_are_marked_once_even_when_many_bytes_change() {
+        let mut ranges = CodeRanges {
+            text: (0, 0),
+            modules: vec![(0x1000, 0x1100), (0x2000, 0x2100)],
+            text_changed: false,
+            modules_changed: vec![false, false],
+            overwrote: None,
+        };
+        ranges.wrote(0x1001);
+        ranges.wrote(0x1002);
+        ranges.wrote(0x20FF);
+        assert_eq!(ranges.changed_module_indices(), [0, 1]);
+    }
+
     fn a_file_of_citras_reads_and_writes_back_the_same() {
         let cheats = parse(FILE);
         assert_eq!(cheats.len(), 2);

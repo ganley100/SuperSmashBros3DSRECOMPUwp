@@ -129,6 +129,7 @@ pub fn run_with(linked: Option<Linked>, overlay: Option<Box<dyn GameOverlay>>) {
         game: None,
         record_on_start: None,
         replay_on_start: None,
+        frame_advance: false,
         menus: {
             let mut menus = Menus::default();
             menus.slot = 1;
@@ -435,6 +436,8 @@ struct App {
     record_on_start: Option<PathBuf>,
     /// a replay file to play from the next game boot.
     replay_on_start: Option<PathBuf>,
+    /// run one frame while the game is otherwise paused.
+    frame_advance: bool,
     library: Library,
     menus: Menus,
     jobs: Vec<Job>,
@@ -850,7 +853,19 @@ impl App {
         Ok(())
     }
 
+    /// queues exactly one emulated frame while keeping the game paused.
+    fn advance_one_frame(&mut self) {
+        if self.game.is_none() {
+            return;
+        }
+        self.paused = true;
+        self.frame_advance = true;
+        self.keyboard.release();
+        self.next_frame = Instant::now();
+    }
+
     fn back_to_library(&mut self) {
+        self.frame_advance = false;
         self.game = None;
         self.overlay_corner = None;
         if let Some(room) = &self.room {
@@ -912,12 +927,13 @@ impl App {
                     self.paused = !self.paused;
                     log::info!("{}", if self.paused { "paused" } else { "resumed" });
                 }
+                KeyCode::F2 if self.game.is_some() => self.advance_one_frame(),
                 KeyCode::F9 => self.set_layout(self.active.layout.next()),
                 KeyCode::F10 if self.active.layout.other_screen() != self.active.layout => self.set_layout(self.active.layout.other_screen()),
                 KeyCode::F11 => self.toggle_fullscreen(),
                 KeyCode::F5 if self.game.is_some() => self.save_state(),
                 KeyCode::F6 if self.game.is_some() => self.toggle_recording(),
-                KeyCode::F7 if self.game.is_some() => self.play_replay(),
+                KeyCode::F7 if self.game.is_some() => self.toggle_replay(),
                 KeyCode::F8 if self.game.is_some() => self.load_state(),
                 _ => {}
             }
@@ -1315,7 +1331,7 @@ impl App {
             Action::LoadState => self.load_state(),
             Action::RecordMatch => self.start_recording(),
             Action::StopRecording => self.stop_recording(),
-            Action::PlayReplay => self.play_replay(),
+            Action::PlayReplay => self.toggle_replay(),
             Action::OpenReplays(program_id) => {
                 match &self.data_dir {
                     Some(data_dir) => {
@@ -1466,12 +1482,13 @@ impl App {
 
         // a game waiting on its keyboard waits for the user, not running
         let typing = self.game.as_ref().is_some_and(|game| game.system.keyboard_request().is_some());
-        let playing = self.game.is_some() && !self.paused && !self.menus.over_game() && !typing;
+        let advance = self.frame_advance && self.game.is_some() && !typing;
+        let playing = advance || (self.game.is_some() && !self.paused && !self.menus.over_game() && !typing);
         // Tab or a controller's right trigger, or the right stick's click
         // while ZR has the trigger, whichever no button of the console's is on
         let free = |button: gilrs::Button| self.settings.pad.map().iter().all(|&(_, bound)| bound != button);
         let trigger = [gilrs::Button::RightTrigger2, gilrs::Button::RightThumb].into_iter().find(|&button| free(button));
-        let fast = playing && (self.fast_forward_key || trigger.is_some_and(|trigger| self.gamepads.holding(trigger)));
+        let fast = playing && !advance && (self.fast_forward_key || trigger.is_some_and(|trigger| self.gamepads.holding(trigger)));
         if fast {
             // the output waits out fast forward rather than run dry
             if let Some(audio) = &self.audio {
@@ -1490,6 +1507,9 @@ impl App {
         }
         if playing {
             let start = Instant::now();
+            if advance {
+                self.frame_advance = false;
+            }
             self.emulate();
             self.spent.emulating.add(start.elapsed());
         } else if let Some(audio) = &self.audio {
@@ -1557,6 +1577,13 @@ impl App {
     /// runs one frame of the game.
     fn emulate(&mut self) {
         let Some(game) = &mut self.game else { return };
+        if game.replay.as_ref().is_some_and(|replay| replay.ended(game.frame)) {
+            game.replay = None;
+            self.paused = true;
+            self.menus.menu_open = true;
+            self.menus.toast = Some(("Replay finished".to_owned(), Instant::now()));
+            return;
+        }
         let input = match &mut game.replay {
             Some(replay) => replay.input(game.frame),
             None => self.gamepads.apply(self.keyboard.state()),
@@ -1762,7 +1789,7 @@ impl App {
 
     /// closes the recording cleanly so all buffered inputs reach disk.
     fn stop_recording(&mut self) {
-        let Some(recorder) = self.game.as_mut().and_then(|game| game.recorder.take()) else {
+        let Some(mut recorder) = self.game.as_mut().and_then(|game| game.recorder.take()) else {
             self.menus.message = Some("There isn't a match being recorded.".to_owned());
             return;
         };
@@ -1772,8 +1799,24 @@ impl App {
         }
     }
 
+    /// F7 stops playback when it is on, or starts the latest recording.
+    fn toggle_replay(&mut self) {
+        if let Some(game) = &mut self.game {
+            if game.replay.take().is_some() {
+                self.paused = true;
+                self.menus.menu_open = true;
+                self.menus.toast = Some(("Replay stopped".to_owned(), Instant::now()));
+                return;
+            }
+        }
+        self.play_replay();
+    }
+
     /// restarts the running game with the most recent recorded input stream.
     fn play_replay(&mut self) {
+        if self.game.as_ref().is_some_and(|game| game.recorder.is_some()) {
+            self.stop_recording();
+        }
         let Some(game_path) = self.game.as_ref().map(|game| game.path.clone()) else { return };
         let Some(path) = self.replay_path() else {
             self.menus.message = Some("Replay playback needs the application's data folder.".to_owned());
@@ -1871,6 +1914,7 @@ impl App {
             .and_then(|path| std::fs::metadata(path).ok()?.modified().ok())
             .map(ago);
         let program_id = self.program_id();
+        let has_replay = self.replay_path().is_some_and(|path| path.is_file());
         let (Some(gui), Some(window)) = (&mut self.gui, &self.window) else { return Overlay::default() };
         let show_fps = self.settings.show_fps;
         let game = self.game.as_ref().map(|game| (
@@ -1880,7 +1924,6 @@ impl App {
             game.recorder.is_some(),
             game.replay.is_some(),
         ));
-        let has_replay = self.replay_path().is_some_and(|path| path.is_file());
         let fast = self.fast_forwarding;
         let keyboard = self.game.as_ref().and_then(|game| game.system.keyboard_request().cloned());
         let room = self.room.as_ref().filter(|_| self.menus.multiplayer_open).map(|connection| {

@@ -75,10 +75,14 @@ Individual game features, online services, peripheral behavior, updates and DLC 
 The pause menu's **Match replays** section can record and replay a complete run without command-line environment variables:
 
 - **F6** starts a recording from a fresh game boot. Press F6 again, or choose **Stop and save recording**, to finish it.
-- **F7** restarts the game and plays the most recent recording. Live keyboard/controller input is ignored during playback.
+- **F7** restarts the game and plays the most recent recording. Live keyboard/controller input is ignored during playback; press F7 again to stop early. New recordings stop automatically at their recorded frame count. Older recordings without a duration marker remain playable and can be stopped with F7.
 - **Open recordings folder** opens the per-game recording directory. The latest recording is stored as `replays/<TITLE_ID>/latest.replay` inside the application's data folder.
 
 Recordings contain the input stream and original emulated clock, not game assets. Use the same game dump, update, DLC and settings when replaying for the most reliable result. Starting a recording deliberately restarts the game so playback can reproduce the entire run from its first frame.
+
+## Frame advance
+
+Pause with **F1**, then press **F2** to advance exactly one emulated frame while remaining paused. The same **Advance one frame (F2)** control is available in the pause menu. This is useful for frame-by-frame checks of inputs, timing, animation and game-state transitions.
 
 ## Downloads
 

@@ -13,6 +13,7 @@ pub struct Recorder {
     out: BufWriter<File>,
     last: Option<InputState>,
     frame: u64,
+    finished: bool,
 }
 
 impl Recorder {
@@ -21,7 +22,7 @@ impl Recorder {
         let mut out = BufWriter::new(File::create(path)?);
         writeln!(out, "clock {clock}")?;
         out.flush()?;
-        Ok(Recorder { out, last: None, frame: 0 })
+        Ok(Recorder { out, last: None, frame: 0, finished: false })
     }
 
     /// takes the input of the frame about to run.
@@ -55,13 +56,27 @@ impl Recorder {
     }
 
     /// finishes a recording and reports any buffered write error.
-    pub fn finish(mut self) -> std::io::Result<()> {
+    pub fn finish(&mut self) -> std::io::Result<()> {
+        if !self.finished {
+            writeln!(self.out, "end {}", self.frame)?;
+            self.finished = true;
+        }
         self.out.flush()
+    }
+}
+
+impl Drop for Recorder {
+    fn drop(&mut self) {
+        if let Err(error) = self.finish() {
+            log::warn!("could not finish the input recording: {error}");
+        }
     }
 }
 
 pub struct Replay {
     clock: u64,
+    /// absent for older recordings made before the end marker was added.
+    frames: Option<u64>,
     changes: Vec<(u64, InputState)>,
     next: usize,
     current: InputState,
@@ -74,8 +89,20 @@ impl Replay {
         let first = lines.next().ok_or_else(|| bad("empty"))??;
         let clock = first.strip_prefix("clock ").and_then(|c| c.trim().parse().ok()).ok_or_else(|| bad("no clock"))?;
         let mut changes = Vec::new();
+        let mut frames = None;
         for line in lines {
             let line = line?;
+            if frames.is_some() && !line.trim().is_empty() {
+                return Err(bad("data after the end marker"));
+            }
+            if let Some(end) = line.strip_prefix("end ") {
+                let count = end.trim().parse::<u64>().map_err(|_| bad("invalid end marker"))?;
+                if changes.last().is_some_and(|(frame, _)| *frame >= count) {
+                    return Err(bad("end marker precedes the last input"));
+                }
+                frames = Some(count);
+                continue;
+            }
             let fields: Vec<&str> = line.split_whitespace().collect();
             let (head, rest) = fields.split_at(fields.len().min(6));
             let [frame, buttons, x, y, tx, ty] = head[..] else { return Err(bad(&line)) };
@@ -103,12 +130,18 @@ impl Replay {
             };
             changes.push(parse().ok_or_else(|| bad(&line))?);
         }
-        Ok(Replay { clock, changes, next: 0, current: InputState::default() })
+        Ok(Replay { clock, frames, changes, next: 0, current: InputState::default() })
     }
 
     /// the clock the recorded run started at.
     pub fn clock(&self) -> u64 {
         self.clock
+    }
+
+    /// whether the given frame is at or beyond a recording's end.
+    /// older recordings have no known duration and therefore never end here.
+    pub fn ended(&self, frame: u64) -> bool {
+        self.frames.is_some_and(|frames| frame >= frames)
     }
 
     /// the input of a frame, frames asked for in order.
@@ -148,6 +181,8 @@ mod tests {
         recorder.finish().unwrap();
         let mut replay = Replay::open(&path).unwrap();
         assert_eq!(replay.clock(), 1234);
+        assert!(!replay.ended(9));
+        assert!(replay.ended(10));
         for frame in 0..10 {
             let expected = if (3..6).contains(&frame) { pressed } else { InputState::default() };
             assert_eq!(replay.input(frame), expected);
@@ -163,6 +198,7 @@ mod tests {
         let mut replay = Replay::open(&path).unwrap();
         let input = replay.input(2);
         assert_eq!((input.buttons, input.tilt), (PadState::A, [0.0, 0.0]));
+        assert!(!replay.ended(10), "legacy recordings have no duration marker");
         let _ = std::fs::remove_file(path);
     }
 }
