@@ -451,9 +451,10 @@ mod tests {
         ranges.wrote(0x1001);
         ranges.wrote(0x1002);
         ranges.wrote(0x20FF);
-        assert_eq!(ranges.changed_module_indices(), [0, 1]);
+        assert_eq!(ranges.changed_module_indices(), vec![0, 1]);
     }
 
+    #[test]
     fn a_file_of_citras_reads_and_writes_back_the_same() {
         let cheats = parse(FILE);
         assert_eq!(cheats.len(), 2);
