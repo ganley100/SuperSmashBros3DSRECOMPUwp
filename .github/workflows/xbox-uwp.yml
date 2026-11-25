@@ -10,6 +10,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      icon_url:
+        description: Link to your own picture (PNG/JPEG) for the app tiles
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -48,7 +53,16 @@ jobs:
 
       - name: Build, pack and sign
         shell: pwsh
-        run: ./packaging/uwp/build-msix.ps1 -Region ${{ matrix.region }}
+        env:
+          # your own tile picture, from the Run workflow form or the
+          # repository variable XBOX_ICON_URL; never stored in the repo
+          ICON_URL: ${{ inputs.icon_url || vars.XBOX_ICON_URL }}
+        run: |
+          if ($env:ICON_URL) {
+            ./packaging/uwp/build-msix.ps1 -Region ${{ matrix.region }} -Icon $env:ICON_URL
+          } else {
+            ./packaging/uwp/build-msix.ps1 -Region ${{ matrix.region }}
+          }
 
       - name: Upload package
         uses: actions/upload-artifact@v7

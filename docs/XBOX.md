@@ -75,6 +75,15 @@ From a **Developer PowerShell for VS** (x64) prompt. The script links the app ag
 
 The packages, a self-signed `.cer` and the VCLibs dependency are written to `dist/uwp`. To build one region by hand: `cargo +nightly build -Z build-std --release --target x86_64-uwp-windows-msvc -p zakuro-uwp` for USA, or the same with `--no-default-features --features jpn` for Japan.
 
+### Your own tile picture
+
+The packages use the project's own icon. To put a picture of your choice, such as your game's cover, on the app's tiles and splash screen, give it to the build. It is added to the package only and never stored in the repository:
+
+- **GitHub Actions:** in the repository's **Settings → Secrets and variables → Actions → Variables**, add `XBOX_ICON_URL` with a direct https link to the PNG or JPEG, then push or re-run the workflow. Once the workflow is on `main`, **Run workflow** also has an `icon_url` field.
+- **Locally:** `./packaging/uwp/build-msix.ps1 -Region USA -Icon C:\pictures\cover.png`.
+
+Packages built with someone else's artwork are for your own console; don't share them.
+
 ### Faster: linking recompiled code
 
 An Xbox app can't run a C compiler or load a code library from a loose file, so the desktop **Recompile** button doesn't exist here. Instead, the recompiled code is linked into the app when you build it on your PC:

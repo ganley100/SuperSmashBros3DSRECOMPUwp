@@ -16,6 +16,7 @@
 .EXAMPLE
   ./packaging/uwp/build-msix.ps1 -Region USA
   ./packaging/uwp/build-msix.ps1 -Region JPN -RecompDir C:\ports\smash-jpn\code
+  ./packaging/uwp/build-msix.ps1 -Region USA -Icon C:\pictures\cover.png
 #>
 param(
   [Parameter(Mandatory = $true)][ValidateSet('USA', 'JPN')][string]$Region,
@@ -26,7 +27,10 @@ param(
   # a .pfx to sign with; a self-signed one is made when none is given
   [string]$CertificatePath,
   [string]$CertificatePassword = 'smash3ds',
-  [string]$OutDir = 'dist/uwp'
+  [string]$OutDir = 'dist/uwp',
+  # your own picture for the app's tiles and splash screen (PNG or JPEG),
+  # a file or an https URL. it goes into the package only, never the repo.
+  [string]$Icon
 )
 
 $ErrorActionPreference = 'Stop'
@@ -67,6 +71,31 @@ Remove-Item -Recurse -Force $layout -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path (Join-Path $layout 'Assets') | Out-Null
 Copy-Item "target/$target/release/smash-3ds-uwp.exe" $layout
 Copy-Item packaging/uwp/Assets/*.png (Join-Path $layout 'Assets')
+if ($Icon) {
+  if ($Icon -match '^https?://') {
+    $downloaded = Join-Path ([IO.Path]::GetTempPath()) "smash-3ds-icon-$PID"
+    Invoke-WebRequest -Uri $Icon -OutFile $downloaded -UseBasicParsing
+    $Icon = $downloaded
+  }
+  Add-Type -AssemblyName System.Drawing
+  $source = [System.Drawing.Image]::FromFile((Resolve-Path $Icon).Path)
+  # each tile: the picture as large as fits, centred, on the tile colour
+  $tiles = @{ StoreLogo = @(50, 50); Square44x44Logo = @(44, 44); Square150x150Logo = @(150, 150); Wide310x150Logo = @(310, 150); SplashScreen = @(620, 300) }
+  foreach ($name in $tiles.Keys) {
+    $width, $height = $tiles[$name]
+    $bitmap = New-Object System.Drawing.Bitmap $width, $height
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $graphics.Clear([System.Drawing.Color]::FromArgb(27, 27, 47))
+    $scale = [Math]::Min($width / $source.Width, $height / $source.Height)
+    $w = [int]($source.Width * $scale); $h = [int]($source.Height * $scale)
+    $graphics.DrawImage($source, [int](($width - $w) / 2), [int](($height - $h) / 2), $w, $h)
+    $bitmap.Save((Join-Path $layout "Assets/$name.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+    $graphics.Dispose(); $bitmap.Dispose()
+  }
+  $source.Dispose()
+  Write-Host "Tiles made from $Icon"
+}
 Copy-Item README.md, COMPATIBILITY.md, LICENSE, LICENSE-MIT, THIRD_PARTY_NOTICES.md $layout
 Copy-Item docs/XBOX.md $layout
 
