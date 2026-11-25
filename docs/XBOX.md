@@ -66,7 +66,7 @@ On Windows, you need:
 - The Windows 10/11 SDK.
 - Rust, plus the nightly toolchain with the standard library source: `rustup toolchain install nightly --component rust-src`. `x86_64-uwp-windows-msvc` is a tier-3 target, so the standard library is built from source.
 
-From a **Developer PowerShell for VS** prompt opened for UWP (`Launch-VsDevShell.ps1 -Arch amd64` then `vcvarsall.bat x64 uwp`, or ilammy/msvc-dev-cmd with `uwp: true` in CI):
+From a **Developer PowerShell for VS** (x64) prompt. The script links the app against Visual Studio's app ("store") CRT itself:
 
 ```powershell
 ./packaging/uwp/build-msix.ps1 -Region USA

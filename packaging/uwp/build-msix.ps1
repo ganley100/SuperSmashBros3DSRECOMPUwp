@@ -4,8 +4,8 @@
   region: the USA and Japan releases are separate apps.
 
 .DESCRIPTION
-  Run from a "Developer PowerShell for VS" (or after ilammy/msvc-dev-cmd with
-  uwp: true), so that link.exe uses the app ("store") CRT libraries. Needs the
+  Run from a "Developer PowerShell for VS" (or after ilammy/msvc-dev-cmd); the
+  script links the app itself against the app ("store") CRT libraries. Needs the
   nightly Rust toolchain with rust-src, and the Windows 10/11 SDK for
   makeappx.exe and signtool.exe.
 
@@ -48,6 +48,15 @@ if (-not $Version) {
 # --- build -------------------------------------------------------------------
 if ($RecompDir) { $env:SMASH3DS_RECOMP_DIR = (Resolve-Path $RecompDir).Path }
 $target = 'x86_64-uwp-windows-msvc'
+
+# the app ("store") CRT for the app alone: build scripts run on this PC and
+# keep the desktop CRT, so it can't be set for the whole environment. /LIBPATH
+# is searched before LIB, and with --target these flags reach only the target.
+if (-not $env:VCToolsInstallDir) { throw 'Run this from a Developer PowerShell for VS (VCToolsInstallDir is not set).' }
+$store = Join-Path $env:VCToolsInstallDir 'lib\x64\store'
+if (-not (Test-Path $store)) { throw "$store is missing; install Visual Studio's Universal Windows Platform tools." }
+$sep = [char]0x1f
+$env:CARGO_ENCODED_RUSTFLAGS = (@('-C', "link-arg=/LIBPATH:$store", '-C', 'link-arg=windowsapp.lib') -join $sep)
 Write-Host "Building the $Region app ($target, version $Version)"
 cargo +nightly build -Z build-std --release --locked --target $target -p zakuro-uwp --no-default-features --features $info.Feature
 if ($LASTEXITCODE -ne 0) { throw 'cargo build failed' }

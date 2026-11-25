@@ -41,11 +41,10 @@ jobs:
       - name: Install nightly Rust with the standard library's source
         run: rustup toolchain install nightly --profile minimal --component rust-src
 
-      - name: Use the app (store) CRT for linking
+      - name: Set up the Visual Studio build environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-          uwp: true
 
       - name: Build, pack and sign
         shell: pwsh
