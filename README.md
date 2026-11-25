@@ -58,6 +58,12 @@ smash-3ds --prepare --game /path/to/your/decrypted-game.3ds
 
 Replace the example path with the path to your own dump.
 
+## Xbox One / Series (UWP)
+
+The repository also builds a UWP app for Xbox consoles in **Dev Mode** (`crates/zakuro-uwp`). The **USA and Japan releases are separate apps** with their own packages, saves and folders, so both can be installed together. Each app reads your dump from, and keeps its files in, `D:\DevelopmentFiles\SmashBros3DS-USA` or `D:\DevelopmentFiles\SmashBros3DS-JPN` by default, which you can fill from a PC through the Xbox Device Portal.
+
+The **Xbox (UWP) packages** workflow builds `smash-3ds-xbox-usa-x64.msix` and `smash-3ds-xbox-jpn-x64.msix`. Installation, controls, building, and linking recompiled code from your own dump are covered in [docs/XBOX.md](docs/XBOX.md). The Xbox build is experimental and has not yet been tested on console hardware.
+
 ## Runtime features
 
 This game-specific build inherits the desktop features implemented by Zakuro:
@@ -118,6 +124,7 @@ The script bundles MoltenVK into the app and creates a matching `.dmg`.
 
 - **CI** builds and tests the Rust workspace on Windows, macOS and Linux.
 - **macOS test build** packages the application and performs a smoke test.
+- **Xbox (UWP) packages** builds the separate USA and Japan Xbox Dev Mode packages.
 - **Release** produces Windows, macOS and Linux packages. Push a version tag such as `v1.0.0` after the initial branch is ready; the release workflow publishes only after the platform builds succeed.
 - Pushes to `main` run build/test jobs and keep temporary artifacts. They do not publish a GitHub Release.
 

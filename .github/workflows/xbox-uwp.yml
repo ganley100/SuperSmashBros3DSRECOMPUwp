@@ -1,0 +1,62 @@
+name: Xbox (UWP) packages
+
+# builds the USA and Japan apps as separate signed MSIX packages for Xbox
+# Dev Mode. no game code is in them: they interpret the game unless built
+# locally with recompiled code, see docs/XBOX.md.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smash-3ds-xbox-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test the platform-independent parts of the Xbox app
+        run: |
+          cargo test --locked -p zakuro-uwp
+          cargo test --locked -p zakuro-uwp --no-default-features --features jpn
+
+  package:
+    needs: test
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        region: [USA, JPN]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install nightly Rust with the standard library's source
+        run: rustup toolchain install nightly --profile minimal --component rust-src
+
+      - name: Use the app (store) CRT for linking
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          uwp: true
+
+      - name: Build, pack and sign
+        shell: pwsh
+        run: ./packaging/uwp/build-msix.ps1 -Region ${{ matrix.region }}
+
+      - name: Upload package
+        uses: actions/upload-artifact@v7
+        with:
+          name: smash-3ds-xbox-${{ matrix.region }}
+          path: |
+            dist/uwp/*.msix
+            dist/uwp/*.cer
+            dist/uwp/Microsoft.VCLibs.x64.14.00.appx
+          if-no-files-found: error

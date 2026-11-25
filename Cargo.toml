@@ -7,6 +7,7 @@ members = [
     "crates/zakuro-gpu",
     "crates/zakuro-core",
     "crates/zakuro",
+    "crates/zakuro-uwp",
 ]
 
 [workspace.package]
@@ -20,8 +21,10 @@ repository = "https://github.com/nvd123-YT/SuperSmashBros3DSRECOMP"
 zakuro-common = { path = "crates/zakuro-common" }
 zakuro-fs     = { path = "crates/zakuro-fs" }
 zakuro-cpu    = { path = "crates/zakuro-cpu" }
-zakuro-gpu    = { path = "crates/zakuro-gpu" }
-zakuro-core   = { path = "crates/zakuro-core" }
+# default features off so the Xbox (UWP) build can leave the shader JIT out;
+# the desktop crates turn "jit" back on.
+zakuro-gpu    = { path = "crates/zakuro-gpu", default-features = false }
+zakuro-core   = { path = "crates/zakuro-core", default-features = false }
 
 log = "0.4"
 thiserror = "2"

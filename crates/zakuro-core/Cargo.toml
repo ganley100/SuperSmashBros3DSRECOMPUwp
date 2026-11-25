@@ -4,6 +4,12 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = ["jit"]
+# the shaders the CPU runs compiled to host code. the Xbox (UWP) build leaves
+# it out, since an app there may not make memory executable by default.
+jit = ["zakuro-gpu/jit"]
+
 [dependencies]
 symphonia-codec-aac = "0.6"
 symphonia-core = "0.6"

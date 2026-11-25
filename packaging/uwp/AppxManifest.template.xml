@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The UWP package for one region of Super Smash Bros. 3DS Recompiled.
+  build-msix.ps1 fills in the {{...}} values; each region gets its own
+  Identity Name, so the USA and Japan apps install side by side.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="{{IDENTITY}}"
+    Publisher="{{PUBLISHER}}"
+    Version="{{VERSION}}"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>{{DISPLAY_NAME}}</DisplayName>
+    <PublisherDisplayName>Super Smash Bros. 3DS Recompiled contributors</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+    <!-- the app CRT the Rust UWP target links against -->
+    <PackageDependency Name="Microsoft.VCLibs.140.00" MinVersion="14.0.30035.0" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="{{LANGUAGE}}" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="smash-3ds-uwp.exe" EntryPoint="SmashBros3DS.App">
+      <uap:VisualElements
+        DisplayName="{{DISPLAY_NAME}}"
+        Description="{{DESCRIPTION}}"
+        BackgroundColor="#1B1B2F"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#1B1B2F" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- lets the shader JIT, when built in, make memory executable -->
+    <Capability Name="codeGeneration" />
+    <!-- read the dump and write saves under D:\DevelopmentFiles -->
+    <rescap:Capability Name="broadFileSystemAccess" />
+    <uap:Capability Name="removableStorage" />
+  </Capabilities>
+</Package>

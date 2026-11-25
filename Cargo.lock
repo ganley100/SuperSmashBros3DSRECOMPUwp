@@ -4753,6 +4753,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "zakuro-uwp"
+version = "1.0.1"
+dependencies = [
+ "log",
+ "windows 0.62.2",
+ "windows-core 0.62.2",
+ "windows-numerics",
+ "zakuro-common",
+ "zakuro-core",
+ "zakuro-fs",
+]
+
+[[package]]
 name = "zerocopy"
 version = "0.8.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"

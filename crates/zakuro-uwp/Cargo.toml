@@ -1,0 +1,58 @@
+[package]
+name = "zakuro-uwp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Super Smash Bros. for Nintendo 3DS runtime as a UWP app, for Xbox One / Series Dev Mode"
+
+[[bin]]
+name = "smash-3ds-uwp"
+path = "src/main.rs"
+
+[features]
+# each region is its own app with its own package identity, title ID and
+# data folder, so the USA and Japan games install side by side on an Xbox.
+# build with --no-default-features --features jpn for the Japanese one.
+default = ["usa"]
+usa = []
+jpn = []
+# the shader JIT, off by default: an Xbox app makes memory executable only
+# with the codeGeneration capability, which the package declares, but the
+# interpreter is the safe choice until it has been tried on a console.
+shader-jit = ["zakuro-core/jit"]
+
+[dependencies]
+zakuro-common.workspace = true
+zakuro-core.workspace = true
+zakuro-fs.workspace = true
+log.workspace = true
+
+[dev-dependencies]
+zakuro-fs = { workspace = true, features = ["testing"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-core = "0.62"
+windows-numerics = "0.3"
+windows = { version = "0.62", features = [
+    "ApplicationModel_Activation",
+    "ApplicationModel_Core",
+    "Foundation",
+    "Foundation_Collections",
+    "Gaming_Input",
+    "Graphics_Display",
+    "Storage",
+    "Storage_Search",
+    "System",
+    "UI_Core",
+    "Win32_Foundation",
+    "Win32_Graphics_Direct2D",
+    "Win32_Graphics_Direct2D_Common",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_DirectWrite",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Media_Audio",
+    "Win32_Media_Audio_XAudio2",
+    "Win32_System_WinRT",
+] }
